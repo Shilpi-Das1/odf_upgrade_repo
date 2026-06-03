@@ -1,0 +1,5 @@
+FAILED tests/functional/monitoring/prometheus/alerts/test_alerting_works.py::test_prometheus_rule_failures
+FAILED tests/functional/object/mcg/test_multipart_upload.py::TestS3MultipartUpload::test_multipart_upload_operations
+FAILED tests/functional/object/mcg/test_noobaa_use_new_internal_cert_after_rotation.py::TestNoobaaUseNewInternalCertAfterRotation::test_noobaa_use_new_internal_cert_after_rotation
+FAILED tests/functional/z_cluster/test_must_gather_minimal_crds.py::TestMustGather::test_must_gather_minimal_crd_modular[False-False-False-False-False-False-False-False]
+FAILED tests/functional/z_cluster/test_storagesystem.py::TestStorageSystem::test_storagesystem_not_present

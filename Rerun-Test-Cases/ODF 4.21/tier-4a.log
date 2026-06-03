@@ -1,0 +1,3 @@
+FAILED tests/functional/object/mcg/test_multi_region.py::TestMultiRegion::test_multiregion_mirror
+FAILED tests/functional/object/mcg/test_noobaa_db_op.py::TestNoobaaDbOps::test_cnpg_repnetetive_failover
+FAILED tests/functional/z_cluster/nodes/test_check_pods_status_after_node_failure.py::TestCheckPodsAfterNodeFailure::test_check_pods_status_after_node_failure

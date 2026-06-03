@@ -1,0 +1,5 @@
+FAILED tests/functional/z_cluster/test_performance_profile_validation.py::TestProfileDefaultValuesCheck::test_change_cluster_resource_profile[performance]
+FAILED tests/functional/z_cluster/test_performance_profile_validation.py::TestProfileDefaultValuesCheck::test_change_cluster_resource_profile[lean]
+FAILED tests/functional/z_cluster/test_performance_profile_validation.py::TestProfileDefaultValuesCheck::test_change_cluster_resource_profile[balanced]
+FAILED tests/functional/monitoring/prometheus/alerts/test_ceph.py::test_corrupt_pg_alerts
+FAILED tests/functional/monitoring/prometheus/alerts/test_ceph.py::test_ceph_health

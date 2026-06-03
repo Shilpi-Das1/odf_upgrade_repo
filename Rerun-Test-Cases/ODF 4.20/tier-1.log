@@ -1,0 +1,6 @@
+FAILED tests/functional/z_cluster/test_ceph_default_values_check.py::TestCephDefaultValuesCheck::test_noobaa_postgres_cm_post_ocs_upgrade
+FAILED tests/functional/monitoring/prometheus/alerts/test_alerting_works.py::test_prometheus_rule_failures
+FAILED tests/functional/object/mcg/test_log_based_bucket_replication.py::TestLogBasedBucketReplication::test_deletion_sync
+FAILED tests/functional/object/mcg/test_nsfs.py::TestNSFSObjectIntegrity::test_nsfs_list_objects
+FAILED tests/functional/object/mcg/ui/test_bucket_versioning_ui.py::TestBucketVersioningUI::test_enable_bucket_versioning
+FAILED tests/functional/z_cluster/test_must_gather_minimal_crds.py::TestMustGather::test_must_gather_minimal_crd_modular[False-False-False-False-False-False-False-False]

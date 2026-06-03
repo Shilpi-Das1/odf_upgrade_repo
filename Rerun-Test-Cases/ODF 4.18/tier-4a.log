@@ -1,0 +1,3 @@
+FAILED tests/functional/z_cluster/test_performance_profile_validation.py::TestProfileDefaultValuesCheck::test_validate_cluster_resource_profile[performance]
+FAILED tests/functional/z_cluster/test_performance_profile_validation.py::TestProfileDefaultValuesCheck::test_validate_cluster_resource_profile[lean]
+FAILED tests/functional/z_cluster/test_performance_profile_validation.py::TestProfileDefaultValuesCheck::test_validate_cluster_resource_profile[balanced]

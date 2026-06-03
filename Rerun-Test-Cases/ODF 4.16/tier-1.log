@@ -1,0 +1,3 @@
+FAILED tests/functional/object/mcg/test_multipart_upload.py::TestS3MultipartUpload::test_multipart_upload_operations
+
+

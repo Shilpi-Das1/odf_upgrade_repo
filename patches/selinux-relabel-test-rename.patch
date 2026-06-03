@@ -1,0 +1,13 @@
+diff --git a/tests/cross_functional/kcs/test_selinux_relabel_solution.py b/tests/cross_functional/kcs/test_selinux_relabel_solution.py
+index 0bc87cb99..3b5104a85 100644
+--- a/tests/cross_functional/kcs/test_selinux_relabel_solution.py
++++ b/tests/cross_functional/kcs/test_selinux_relabel_solution.py
+@@ -228,7 +228,7 @@ class TestSelinuxrelabel(E2ETest):
+     @bugzilla("1988284")
+     @polarion_id("OCS-5132")
+     @pytest.mark.parametrize("copies", [5])
+-    def deprecated_test_selinux_relabel_for_existing_pvc(
++    def test_selinux_relabel_for_existing_pvc(
+         self, pvc_factory, service_account_factory, copies
+     ):
+         """

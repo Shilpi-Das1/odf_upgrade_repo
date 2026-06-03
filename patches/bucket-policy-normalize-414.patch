@@ -1,0 +1,270 @@
+diff --git a/tests/functional/object/mcg/test_bucket_policy.py b/tests/functional/object/mcg/test_bucket_policy.py
+index 9ca337ff2..7fcc894d5 100644
+--- a/tests/functional/object/mcg/test_bucket_policy.py
++++ b/tests/functional/object/mcg/test_bucket_policy.py
+@@ -1,6 +1,5 @@
+ import logging
+ import time
+-
+ import pytest
+ import botocore.exceptions as boto3exception
+ import json
+@@ -59,6 +58,24 @@ from ocs_ci.utility.retry import retry
+ logger = logging.getLogger(__name__)
+ 
+ 
++def extract_policy_actions(policy_json):
++    """
++    Support AWS (Statement/Action) and NooBaa (statement/action)
++    Normalize to lowercase without s3: prefix
++    """
++    statements = policy_json.get("Statement") or policy_json.get("statement")
++    assert statements, f"No statement found in policy: {policy_json}"
++
++    actions = statements[0].get("Action") or statements[0].get("action")
++    assert actions, f"No actions found in policy: {statements[0]}"
++
++    return [
++        action.split("s3:", 1)[1].lower()
++        for action in actions
++        if action.startswith("s3:")
++    ]
++
++
+ @mcg
+ @red_squad
+ @runs_on_provider
+@@ -75,6 +92,7 @@ class TestS3BucketPolicy(MCGTest):
+         """
+         Test Add, Modify, delete bucket policies
+         """
++
+         # Creating obc and obc object to get account details, keys etc
+         obc_name = bucket_factory(amount=1, interface="OC")[0].name
+         obc_obj = OBC(obc_name)
+@@ -86,7 +104,6 @@ class TestS3BucketPolicy(MCGTest):
+         )
+         bucket_policy = json.dumps(bucket_policy_generated)
+ 
+-        # Add Bucket Policy
+         logger.info(f"Creating bucket policy on bucket: {obc_obj.bucket_name}")
+         put_policy = put_bucket_policy(mcg_obj, obc_obj.bucket_name, bucket_policy)
+ 
+@@ -95,19 +112,26 @@ class TestS3BucketPolicy(MCGTest):
+             if response.status_code == 200:
+                 logger.info("Bucket policy has been created successfully")
+             else:
+-                raise InvalidStatusCode(f"Invalid Status code: {response.status_code}")
++                raise InvalidStatusCode(
++                    f"Invalid Status code: {response.status_code}"
++                )
+         else:
+             raise NoBucketPolicyResponse("Put policy response is none")
+ 
+-        # Get bucket policy
+-        logger.info(f"Getting Bucket policy on bucket: {obc_obj.bucket_name}")
+         get_policy = get_bucket_policy(mcg_obj, obc_obj.bucket_name)
+         logger.info(f"Got bucket policy: {get_policy['Policy']}")
+ 
+-        # Modifying bucket policy to take new policy
+-        logger.info("Modifying bucket policy")
++        policy_json = json.loads(get_policy["Policy"])
++        policy_actions = extract_policy_actions(policy_json)
++        expected_initial_actions = ["getobject"]
++
++        logger.info(f"Initial policy actions: {policy_actions}")
++        assert sorted(policy_actions) == sorted(expected_initial_actions), (
++            f"Initial policy actions mismatch. "
++            f"Expected: {expected_initial_actions}, Got: {policy_actions}"
++        )
++
+         actions_list = ["ListBucket", "CreateBucket"]
+-        actions = list(map(lambda action: "s3:%s" % action, actions_list))
+ 
+         modified_policy_generated = gen_bucket_policy(
+             user_list=obc_obj.obc_account,
+@@ -125,29 +149,32 @@ class TestS3BucketPolicy(MCGTest):
+             if response.status_code == 200:
+                 logger.info("Bucket policy has been modified successfully")
+             else:
+-                raise InvalidStatusCode(f"Invalid Status code: {response.status_code}")
++                raise InvalidStatusCode(
++                    f"Invalid Status code: {response.status_code}"
++                )
+         else:
+             raise NoBucketPolicyResponse("Put modified policy response is none")
+ 
+-        # Get Modified Policy
+         get_modified_policy = get_bucket_policy(mcg_obj, obc_obj.bucket_name)
+         modified_policy = json.loads(get_modified_policy["Policy"])
+         logger.info(f"Got modified bucket policy: {modified_policy}")
+ 
+-        actions_from_modified_policy = modified_policy["Statement"][0]["Action"]
+-        modified_actions = list(map(str, actions_from_modified_policy))
+-        initial_actions = actions
++        modified_actions = extract_policy_actions(modified_policy)
++        expected_modified_actions = [a.lower() for a in actions_list]
++
+         logger.info(f"Actions from modified_policy: {modified_actions}")
+-        logger.info(f"User provided actions actions: {initial_actions}")
+-        if modified_actions == initial_actions:
+-            logger.info("Modified actions and initial actions are same")
++        logger.info(f"User provided actions: {expected_modified_actions}")
++
++        if sorted(modified_actions) == sorted(expected_modified_actions):
++            logger.info("Modified actions and expected actions are same")
+         else:
+             raise UnexpectedBehaviour(
+                 "Modification Failed: Action lists are not identical"
+             )
+ 
+-        # Delete Policy
+-        logger.info(f"Delete bucket policy by admin on bucket: {obc_obj.bucket_name}")
++        logger.info(
++            f"Delete bucket policy by admin on bucket: {obc_obj.bucket_name}"
++        )
+         delete_policy = delete_bucket_policy(mcg_obj, obc_obj.bucket_name)
+         logger.info(f"Delete policy response: {delete_policy}")
+ 
+@@ -156,11 +183,13 @@ class TestS3BucketPolicy(MCGTest):
+             if response.status_code == 204:
+                 logger.info("Bucket policy is deleted successfully")
+             else:
+-                raise InvalidStatusCode(f"Invalid Status code: {response.status_code}")
++                raise InvalidStatusCode(
++                    f"Invalid Status code: {response.status_code}"
++                )
+         else:
+             raise NoBucketPolicyResponse("Delete policy response is none")
+ 
+-        # Confirming again by calling get_bucket_policy
++        # -------------------- CONFIRM DELETE --------------------
+         try:
+             get_bucket_policy(mcg_obj, obc_obj.bucket_name)
+         except boto3exception.ClientError as e:
+@@ -170,7 +199,8 @@ class TestS3BucketPolicy(MCGTest):
+                 logger.info("Bucket policy has been deleted successfully")
+             else:
+                 raise UnexpectedBehaviour(
+-                    f"{e.response} received invalid error code {response.error['Code']}"
++                    f"{e.response} received invalid error code "
++                    f"{response.error['Code']}"
+                 )
+ 
+     @pytest.mark.polarion_id("OCS-2146")
+@@ -179,6 +209,7 @@ class TestS3BucketPolicy(MCGTest):
+         """
+         Tests user access to Put, Get, Delete bucket policy actions
+         """
++
+         # Creating obc and obc object to get account details, keys etc
+         obc_name = bucket_factory(amount=1, interface="OC")[0].name
+         obc_obj = OBC(obc_name)
+@@ -190,12 +221,16 @@ class TestS3BucketPolicy(MCGTest):
+         )
+         bucket_policy = json.dumps(bucket_policy_generated)
+ 
+-        # Admin creates a policy on the user bucket, for Action: PutBucketPolicy
+-        logger.info(f"Creating policy by admin on bucket: {obc_obj.bucket_name}")
++        # Admin creates a policy on the user bucket
++        logger.info(
++            f"Creating policy by admin on bucket: {obc_obj.bucket_name}"
++        )
+         put_policy = put_bucket_policy(mcg_obj, obc_obj.bucket_name, bucket_policy)
+-        logger.info(f"Put bucket policy response from admin: {put_policy}")
++        logger.info(
++            f"Put bucket policy response from admin: {put_policy}"
++        )
+ 
+-        # Verifying Put bucket policy by user by changing the actions to GetBucketPolicy & DeleteBucketPolicy
++        # User modifies policy to GetBucketPolicy & DeleteBucketPolicy
+         user_generated_policy = gen_bucket_policy(
+             user_list=obc_obj.obc_account,
+             actions_list=["GetBucketPolicy", "DeleteBucketPolicy"],
+@@ -203,19 +238,24 @@ class TestS3BucketPolicy(MCGTest):
+         )
+         bucket_policy1 = json.dumps(user_generated_policy)
+ 
+-        logger.info(f"Changing bucket policy by User on bucket: {obc_obj.bucket_name}")
++        logger.info(
++            f"Changing bucket policy by User on bucket: {obc_obj.bucket_name}"
++        )
+         put_policy_user = put_bucket_policy(
+             obc_obj, obc_obj.bucket_name, bucket_policy1
+         )
+-        logger.info(f"Put bucket policy response from user: {put_policy_user}")
++        logger.info(
++            f"Put bucket policy response from user: {put_policy_user}"
++        )
+ 
+-        # Verifying whether user can get the bucket policy after modification
++        # Verify user can get bucket policy
+         get_policy = get_bucket_policy(obc_obj, obc_obj.bucket_name)
+         logger.info(f"Got bucket policy: {get_policy['Policy']}")
+ 
+-        # Verifying whether user is not allowed Put the bucket policy after modification
++        # Verify user is denied further PutBucketPolicy
+         logger.info(
+-            f"Verifying whether user: {obc_obj.obc_account} is denied to put objects"
++            f"Verifying whether user: {obc_obj.obc_account} "
++            f"is denied to put bucket policy"
+         )
+         try:
+             put_bucket_policy(obc_obj, obc_obj.bucket_name, bucket_policy1)
+@@ -224,15 +264,19 @@ class TestS3BucketPolicy(MCGTest):
+             response = HttpResponseParser(e.response)
+             if response.error["Code"] == "AccessDenied":
+                 logger.info(
+-                    f"Put bucket policy has been denied access to the user: {obc_obj.obc_account}"
++                    "Put bucket policy has been denied access to the user: "
++                    f"{obc_obj.obc_account}"
+                 )
+             else:
+                 raise UnexpectedBehaviour(
+-                    f"{e.response} received invalid error code {response.error['Code']}"
++                    f"{e.response} received invalid error code "
++                    f"{response.error['Code']}"
+                 )
+ 
+-        # Verifying whether user can Delete the bucket policy after modification
+-        logger.info(f"Deleting bucket policy on bucket: {obc_obj.bucket_name}")
++        # Verify user can delete bucket policy
++        logger.info(
++            f"Deleting bucket policy on bucket: {obc_obj.bucket_name}"
++        )
+         delete_policy = delete_bucket_policy(obc_obj, obc_obj.bucket_name)
+         logger.info(f"Delete policy response: {delete_policy}")
+ 
+@@ -1021,7 +1065,6 @@ class TestS3BucketPolicy(MCGTest):
+             "GetObjectLegalHold",
+             "PutBucketObjectLockConfiguration",
+             "PutObjectRetention",
+-            "GetObjectLegalHold",
+         ]
+         bucket_policy_generated = gen_bucket_policy(
+             user_list="*",
+@@ -1048,14 +1091,18 @@ class TestS3BucketPolicy(MCGTest):
+         logger.info(f"Got bucket policy: {bucket_policy}")
+         bucket_policy = json.loads(bucket_policy)
+ 
+-        # Find the missing bucket policies
+-        bucket_policies = bucket_policy["Statement"][0]["Action"]
++        # Support both AWS (Statement/Action) and NooBaa (statement/action)
++        statements = bucket_policy.get("Statement") or bucket_policy.get("statement")
++        assert statements, f"No statement found in bucket policy: {bucket_policy}"
++
++        actions = statements[0].get("Action") or statements[0].get("action")
++        assert actions, f"No action list found in bucket policy: {statements[0]}"
+         bucket_policies = [
+-            action.split("s3:", 1)[1]
+-            for action in bucket_policies
+-            if action.startswith("s3:")
++             action.split("s3:", 1)[1]
++             for action in actions
++             if action.startswith("s3:")
+         ]
+-        actions_list = [action for action in actions_list]
++        actions_list = [action.lower() for action in actions_list]
+         missing_policies = [
+             action for action in actions_list if action not in bucket_policies
+         ]

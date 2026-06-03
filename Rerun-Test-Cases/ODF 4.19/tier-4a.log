@@ -1,0 +1,2 @@
+FAILED tests/functional/z_cluster/nodes/test_check_pods_status_after_node_failure.py::TestCheckPodsAfterNodeFailure::test_check_pods_status_after_node_failure
+FAILED tests/functional/z_cluster/nodes/test_nodes_restart.py::TestNodesRestart::test_nodes_restart[True]

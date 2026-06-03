@@ -1,0 +1,3 @@
+FAILED tests/functional/monitoring/prometheus/alerts/test_alerting_works.py::test_prometheus_rule_failures
+FAILED tests/functional/object/mcg/test_bucket_notifications.py::TestBucketNotifications::test_bucket_notifications[default-logs-pvc]
+FAILED tests/functional/z_cluster/test_must_gather_minimal_crds.py::TestMustGather::test_must_gather_minimal_crd_modular[False-False-False-False-False-False]

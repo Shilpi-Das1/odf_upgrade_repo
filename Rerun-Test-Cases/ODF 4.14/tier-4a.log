@@ -1,0 +1,4 @@
+FAILED tests/functional/monitoring/prometheus/alerts/test_ceph.py::test_corrupt_pg_alerts
+FAILED tests/functional/monitoring/prometheus/alerts/test_ceph.py::test_ceph_health
+FAILED tests/functional/object/mcg/test_multi_region.py::TestMultiRegion::test_multiregion_mirror
+FAILED tests/functional/z_cluster/nodes/test_check_pods_status_after_node_failure.py::TestCheckPodsAfterNodeFailure::test_check_pods_status_after_node_failure

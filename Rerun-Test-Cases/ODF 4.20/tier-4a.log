@@ -1,0 +1,6 @@
+FAILED tests/functional/object/mcg/test_multi_region.py::TestMultiRegion::test_multiregion_mirror
+FAILED tests/functional/object/mcg/test_noobaa_db_op.py::TestNoobaaDbOps::test_cnpg_repnetetive_failover
+FAILED tests/functional/z_cluster/test_performance_profile_validation.py::TestProfileDefaultValuesCheck::test_validate_cluster_resource_profile[lean]
+FAILED tests/functional/z_cluster/test_performance_profile_validation.py::TestProfileDefaultValuesCheck::test_validate_cluster_resource_profile[balanced]
+FAILED tests/functional/z_cluster/nodes/test_nodes_restart.py::TestNodesRestart::test_nodes_restart[True]
+FAILED tests/functional/monitoring/prometheus/alerts/test_ceph.py::test_corrupt_pg_alerts

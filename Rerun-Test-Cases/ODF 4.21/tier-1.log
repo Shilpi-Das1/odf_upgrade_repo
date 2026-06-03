@@ -1,0 +1,4 @@
+FAILED tests/functional/monitoring/prometheus/alerts/test_alerting_works.py::test_prometheus_rule_failures
+FAILED tests/functional/nfs_feature/test_nfs_feature_enable_for_ODF_clusters.py::TestDefaultNfsDisabled::test_nfs_not_enabled_by_default
+FAILED tests/functional/object/mcg/test_log_based_bucket_replication.py::TestLogBasedBucketReplication::test_deletion_sync
+FAILED tests/functional/object/mcg/test_nsfs.py::TestNSFSObjectIntegrity::test_nsfs_list_objects

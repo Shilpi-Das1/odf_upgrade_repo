@@ -1,0 +1,1 @@
+FAILED tests/functional/object/mcg/test_object_integrity.py::TestObjectIntegrity::test_check_object_integrity[DEFAULT-BACKINGSTORE]
