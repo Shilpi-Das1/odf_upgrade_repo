@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Nodes list
-NODES=("worker-0" "worker-1" "worker-2")
+NODES=($(oc get nodes | grep worker | awk '{print $1}'))
 
 # Array to store device paths
 DEVICE_PATHS=()
@@ -9,17 +9,23 @@ DEVICE_PATHS=()
 # Fetch disk IDs for each node
 for node in "${NODES[@]}"; do
     echo "Fetching disk ID from $node..."
-    ssh core@$node sudo scsi-rescan -a
-    # Fetch up to two disk names from lsblk
-    DISK_NAMES=$(ssh core@$node "lsblk | grep 500 | awk '{print \$1}'")
+
+    echo "--------------------lsblock before -------------------"
+    echo
+    oc debug node/"$node" -- chroot /host lsblk
+    oc debug node/"$node" -- chroot /host scsi-rescan -a
+    echo "--------------------lsblock after -------------------"
+    echo
+    oc debug node/"$node" -- chroot /host lsblk
+
+    DISK_NAMES=$(oc debug node/"$node" -- chroot /host bash -c "lsblk | grep 500 | awk '{print \$1}'" 2>/dev/null)
 
     FOUND_DISK_ID=""
 
     for DISK_NAME in $DISK_NAMES; do
         echo "Checking disk: $DISK_NAME on $node"
 
-        # Fetch the disk ID based on the disk name
-        DISK_ID=$(ssh core@$node "ls -l /dev/disk/by-id/ | grep \"$DISK_NAME\" | head -n 1 | awk '{print \"/dev/disk/by-id/\" \$9}'")
+        DISK_ID=$(oc debug node/"$node" -- chroot /host bash -c "ls -l /dev/disk/by-id/ | grep \"$DISK_NAME\" | head -n 1 | awk '{print \"/dev/disk/by-id/\" \$9}'" 2>/dev/null)
 
         if [[ -n "$DISK_ID" ]]; then
             FOUND_DISK_ID="$DISK_ID"
@@ -30,7 +36,7 @@ for node in "${NODES[@]}"; do
     done
 
     if [[ -z "$FOUND_DISK_ID" ]]; then
-        echo " No disk ID found for any disk on $node."
+        echo "No disk ID found for any disk on $node."
     fi
 done
 
@@ -50,9 +56,7 @@ spec:
           - key: kubernetes.io/hostname
             operator: In
             values:
-              - worker-0
-              - worker-1
-              - worker-2
+$(printf "              - %s\n" "${NODES[@]}")
   storageClassDevices:
     - devicePaths:
 $(printf "        %s\n" "${DEVICE_PATHS[@]}")

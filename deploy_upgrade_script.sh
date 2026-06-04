@@ -149,6 +149,13 @@ for i in {1..30}; do
   sleep 30
 done
 
+# Check if Local Storage Operator installation succeeded
+CSV=$(oc -n openshift-local-storage get subscription local-storage-operator -o jsonpath='{.status.installedCSV}' 2>/dev/null || true)
+PHASE=$(oc -n openshift-local-storage get csv "$CSV" -o jsonpath='{.status.phase}' 2>/dev/null || echo "Pending")
+if [[ "$PHASE" != "Succeeded" ]]; then
+  error_exit "Local Storage Operator failed to install. Final status: $PHASE"
+fi
+
 bash local.sh
 
 log "Waiting for pv to be Ready..."
@@ -161,6 +168,12 @@ for i in {1..30}; do
   warn "PV status: $PHASE, retrying in 30s..."
   sleep 30
 done
+
+# Check if PVs are available
+PHASE=$(oc get pv -n openshift-storage -o jsonpath='{.items[*].status.phase}' 2>/dev/null || echo "NotFound")
+if [[ "$PHASE" != "Available Available Available" ]]; then
+  error_exit "PVs failed to become Available. Final status: $PHASE"
+fi
 # Enable console plugin 
 
 oc patch console.v1.operator.openshift.io/cluster  -n None -p '[{"op": "add", "path": "/spec/plugins", "value": [odf-console]}]' --type json
@@ -318,6 +331,30 @@ for i in {1..30}; do
   warn "StorageCluster status: $PHASE, retrying in 30s..."
   sleep 30
 done
+
+# Verify upgrade version matches expected channel
+log "Verifying ODF upgrade version..."
+odf_csv=$(oc get csv -n openshift-storage -o name | grep odf-operator)
+if [ -z "$odf_csv" ]; then
+  error_exit "ODF CSV not found in openshift-storage namespace"
+fi
+
+current_full_version=$(oc get "$odf_csv" -n openshift-storage -o jsonpath='{.metadata.labels.full_version}')
+if [ -z "$current_full_version" ]; then
+  error_exit "Unable to retrieve ODF version from CSV"
+fi
+
+# Extract major.minor version (e.g., 4.22 from 4.22.0-90)
+current_version=$(echo "$current_full_version" | cut -d'.' -f1,2)
+
+log "Current ODF version: $current_full_version (Channel: $current_version)"
+log "Expected upgrade channel: $UPGRADE_OCS_CHANNEL"
+
+if [[ "$current_version" != "$UPGRADE_OCS_CHANNEL" ]]; then
+  error_exit "Upgrade was unsuccessful. Expected version: $UPGRADE_OCS_CHANNEL, Current version: $current_version"
+fi
+
+log "Version verification successful: ODF upgraded to channel $current_version"
 
 bash odf-build-info.sh | tee -a ${LOG_DIR}/odf-after-upgrade.log
 

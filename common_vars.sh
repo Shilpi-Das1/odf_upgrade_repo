@@ -33,7 +33,28 @@ export AUTH_DIR_PATH="${AUTH_DIR_PATH:-${BASE_DIR}/auth}"
 
 # External dependencies (configurable for different environments)
 export OPENSTACK_AUTH_DIR="${OPENSTACK_AUTH_DIR:-${BASE_DIR}/openstack-upi/auth}"
-export PULL_SECRET_PATH="${PULL_SECRET_PATH:-${BASE_DIR}/.openshift/pull-secret}"
+
+# Pull secret path - supports both Jenkins and Bastion environments
+# Priority order:
+#   1. PULL_SECRET_PATH (if already set)
+#   2. PULL_SECRET_FILE (Jenkins environment variable, if file exists)
+#   3. ${WORKSPACE}/deploy/data/pull-secret.txt (Jenkins workspace path)
+#   4. ${BASE_DIR}/.openshift/pull-secret (Bastion default)
+if [ -z "${PULL_SECRET_PATH:-}" ]; then
+  if [ -n "${PULL_SECRET_FILE:-}" ] && [ -f "${PULL_SECRET_FILE}" ]; then
+    # Use PULL_SECRET_FILE if it's set and the file exists
+    export PULL_SECRET_PATH="${PULL_SECRET_FILE}"
+  elif [ -n "${WORKSPACE:-}" ] && [ -f "${WORKSPACE}/deploy/data/pull-secret.txt" ]; then
+    # Jenkins workspace path (handles case where PULL_SECRET_FILE contains unexpanded variable)
+    export PULL_SECRET_PATH="${WORKSPACE}/deploy/data/pull-secret.txt"
+  else
+    # Bastion default
+    export PULL_SECRET_PATH="${BASE_DIR}/.openshift/pull-secret"
+  fi
+else
+  export PULL_SECRET_PATH="${PULL_SECRET_PATH}"
+fi
+
 export AUTH_YAML_PATH="${AUTH_YAML_PATH:-${BASE_DIR}/auth.yaml}"
 
 # Generated/temporary files
