@@ -1,210 +1,163 @@
-# ODF Rerun Test Automation - Setup Guide
+# ODF Upgrade Repository
 
-## Overview
-This repository contains automation scripts for rerunning failed ODF (OpenShift Data Foundation) test cases across different ODF versions (4.14 to 4.20).
+Repository for ODF (OpenShift Data Foundation) upgrade testing and automation.
 
-**✨ NEW: Multi-Environment Support** - Scripts now work on both Jenkins and bastion nodes automatically! See [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) for details.
+## 📚 Documentation
 
-## Prerequisites
-- Access to the target server
-- Git installed
-- Required directories and files (paths are now configurable - see [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md)):
-  - `/usr/local/bin/oc`
-  - OpenStack auth directory (default: `${BASE_DIR}/openstack-upi/auth/`)
-  - Auth YAML file (default: `${BASE_DIR}/auth.yaml`)
-  - OpenShift pull secret (default: `${BASE_DIR}/.openshift/pull-secret`)
-  - Binary directory (default: `${BASE_DIR}/bin/`)
-  - Python virtual environment at `~/venv/`
+All documentation is in the [`docs/`](docs/) folder:
+- **[Python Environment Setup](docs/PYTHON_ENV_GUIDE.md)** - Setup Python 3.11 for Windows & Linux
+- **[Jira Integration Guide](docs/JIRA_GUIDE.md)** - Create Jira subtasks automatically
 
-## Quick Start 
+## 🚀 Quick Start
 
-### Step 1: Configure var.ini
+### 1. Setup Python Environment
 
-Ensure your `var.ini` file contains the correct ODF version:
-
-```ini
-UPGRADE_OCS_CHANNEL=4.17
+**Windows:**
+```cmd
+activate_venv_bypass.bat
+pip install -r requirements.txt
 ```
 
-Replace `4.17` with your target ODF version (4.14, 4.15, 4.16, 4.17, 4.18, 4.19, 4.20 or 4.21).
+**Linux:**
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
-### Step 2: Run the Script
-
-On your target server, execute:
+### 2. Configure Jira
 
 ```bash
-cd ~/odf_upgrade_repo/
-bash rerun_test.sh
+# Copy templates
+copy .env.example .env                                              # Windows
+copy subtask_config.json.example subtask_config.json               # Windows
+copy odf_version_mapping.json.example odf_version_mapping.json     # Windows
+
+cp .env.example .env                                                # Linux
+cp subtask_config.json.example subtask_config.json                 # Linux
+cp odf_version_mapping.json.example odf_version_mapping.json       # Linux
+
+# Edit all three files with your project details
 ```
 
-**That's it!** The script will automatically:
-1. ✅ Read the ODF version from `var.ini`
-2. ✅ Run environment setup (`setup_environment.sh`)
-3. ✅ Initialize submodules and copy configuration files
-4. ✅ **Apply code patches conditionally** when specific test cases are detected
-5. ✅ Execute all failed test cases from Tier 1 and Tier 4a
-6. ✅ Generate execution summary
+### 3. Create Jira Subtask
 
----
-
-## Patch Management
-
-### Overview
-
-Some test cases require code modifications to run properly across different ODF versions (4.14 to 4.20). The automation system includes a **conditional patch management** feature that automatically applies necessary fixes before running specific test cases.
-
-### How It Works
-
-1. **Automatic Detection**: Before each test case runs, the script checks if it requires a patch
-2. **Conditional Application**: Patches are applied **only when needed** - not all patches are applied upfront
-3. **One-time Application**: Each patch is applied only once per test run, even if multiple tests need it
-4. **Non-blocking**: If a patch fails (already applied or code changed), the script continues
-
-### Supported Test Cases
-
-| Test Case | Patch | Description |
-|-----------|-------|-------------|
-| `test_noobaa_postgres_cm_post_ocs_upgrade` | 001 | Adds PostgreSQL configuration line |
-| `test_selinux_relabel_for_existing_pvc` | 002 | Removes deprecated function prefix |
-
-### Patch Files Location
-
-All patches are stored in the `patches/` directory:
-```
-patches/
-├── noobaa-postgres-config.patch
-├── selinux-relabel-test-rename.patch
-├── test_patch_mapping.conf
-└── README.md
+```bash
+python create_jira_subtask.py
 ```
 
-### Adding New Patches
-
-See [patches/README.md](patches/README.md) for detailed instructions on creating and adding new patches.
-
----
-
-## Detailed Information
-
-### What Happens During Environment Setup (Automatic)
-
-## File Structure
+## 📁 Project Structure
 
 ```
 odf_upgrade_repo/
-├── common_vars.sh            # ⭐ NEW: Central configuration for all paths
-├── setup_environment.sh      # Environment setup script
-├── rerun_test.sh             # Main test execution script
-├── deploy_upgrade_script.sh  # Deployment and upgrade script
-├── run_tier1_tier4a.sh       # Tier 1 and 4a test execution
-├── var.ini                   # Configuration file
-├── ENVIRONMENT_SETUP.md      # ⭐ NEW: Multi-environment configuration guide
-├── patches/                  # Code patches directory
-│   ├── test_patch_mapping.conf
-│   └── *.patch files
-├── Rerun-Test-Cases/         # Test case logs directory
-│   ├── ODF 4.14/
-│   ├── ODF 4.15/
-│   ├── ODF 4.16/
-│   ├── ODF 4.17/
-│   ├── ODF 4.18/
-│   ├── ODF 4.19/
-│   └── ODF 4.20/
-├── rerun-logs/               # Generated test execution logs
-└── execution_summary.txt     # Test execution summary
+├── docs/                          # 📚 All documentation
+│   ├── README.md
+│   ├── PYTHON_ENV_GUIDE.md
+│   └── JIRA_GUIDE.md
+├── create_jira_subtask.py         # 🎯 Main Jira automation script
+├── odf_version_mapping.json       # 🗺️ ODF version to parent key mapping
+├── subtask_config.json.example    # 📝 Configuration template
+├── .env.example                   # 🔐 Credentials template
+├── requirements.txt               # 📦 Python dependencies
+├── setup_python_env.ps1           # 🪟 Windows setup
+├── setup_python_env.sh            # 🐧 Linux setup
+└── activate_venv_bypass.bat       # ⚡ Quick activation (Windows)
 ```
 
-## What the Setup Script Does
+## 🔒 Security
 
-1. **Backs up existing environment**: Moves `ocs-upi-kvm/` to `aocs-upi-kvm/`
-2. **Clones repository**: Fresh clone of `ocs-upi-kvm`
-3. **Version-specific checkout**:
-   - ODF 4.14-4.18: Checks out `v4.18.0` branch
-   - ODF 4.19-4.20: Uses latest code
-4. **Initializes submodules**: Updates all required submodules
-5. **Copies configuration files**:
-   - `oc` binary to `${BIN_DIR}`
-   - Auth directory from `${OPENSTACK_AUTH_DIR}`
-   - `auth.yaml` to ocs-ci data directory
-   - Pull secrets to required locations
+**Files NOT in git (sensitive/project-specific data):**
+- `.env` - Jira credentials
+- `subtask_config.json` - Personal configuration
+- `odf_version_mapping.json` - Project-specific version mappings
+- `venv/` - Python virtual environment
 
-**Note**: All paths are now configurable. See [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) for customization options.
+**Use `.example` files as templates!**
 
-## Multi-Environment Support
+## ✨ Features
 
-### Running on Jenkins
-Scripts automatically detect Jenkins environment via `$WORKSPACE` variable:
+### Jira Automation
+- ✅ Automatic ODF version to parent key mapping
+- ✅ Duplicate detection (prevents creating same subtask twice)
+- ✅ Configurable via JSON file
+- ✅ Supports all subtask fields (components, labels, due date, etc.)
+
+### Python Environment
+- ✅ Python 3.11 support
+- ✅ Cross-platform (Windows & Linux)
+- ✅ Easy setup scripts
+- ✅ Virtual environment isolation
+
+## 📖 Usage Examples
+
+### Create Subtask for ODF 4.18
+```json
+// subtask_config.json
+{
+  "odf_version": "4.18",
+  "summary": "ODF 4.18.30",
+  "description": "Run tier1 and tier4a tests"
+}
+```
+
 ```bash
-# Jenkins automatically sets WORKSPACE
-# Scripts use it as BASE_DIR
-bash deploy_upgrade_script.sh
+python create_jira_subtask.py
 ```
 
-### Running on Bastion
-Scripts default to `/root` when `$WORKSPACE` is not set:
+### List Available ODF Versions
 ```bash
-cd /root/odf_upgrade_repo
-bash rerun_test.sh
+python create_jira_subtask.py --list-versions
 ```
 
-### Custom Paths
-Override any path variable:
+### List Jira Issue Types
 ```bash
-export BASE_DIR=/custom/path
-export LOG_DIR=/var/logs/odf
-bash run_tier1_tier4a.sh
+python create_jira_subtask.py --list-issue-types
 ```
 
-For complete details, see [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md).
+## 🛠️ Development
 
-## Troubleshooting
+### Prerequisites
+- Python 3.11
+- Jira account with API access
+- Jira API token
 
-### Setup Script Fails
-- Ensure you have internet connectivity to clone from GitHub
-- Verify all prerequisite files exist (paths are configurable - see [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md))
-- Check you have write permissions to `${BASE_DIR}`
+### Setup
+1. Clone repository
+2. Setup Python environment (see docs)
+3. Configure credentials
+4. Start automating!
 
-### Rerun Test Script Fails
-- Ensure environment setup was completed successfully
-- Verify `var.ini` has the correct ODF version
-- Check that the virtual environment exists at `~/venv/`
-- Ensure test case log files exist in the appropriate directory
+## 📝 ODF Version Mapping
 
-### Ceph Health Issues
-The script checks for `HEALTH_OK` status before running each test. If Ceph is not healthy, the script will exit. Check cluster health with:
+The script uses `odf_version_mapping.json` to map ODF versions to parent issue keys.
+
+**Setup:**
 ```bash
-oc get cephcluster -n openshift-storage
+# Copy the template
+copy odf_version_mapping.json.example odf_version_mapping.json  # Windows
+cp odf_version_mapping.json.example odf_version_mapping.json    # Linux
+
+# Edit with your project's version mappings
 ```
 
-### Patch Application Issues
+**Example format:**
+```json
+{
+  "4.18": "YOUR-PROJECT-123",
+  "4.19": "YOUR-PROJECT-124"
+}
+```
 
-**Patch fails to apply**:
-- Check if patch was already applied: `cd ~/ocs-upi-kvm/src/ocs-ci/ && git status`
-- The script will show a warning but continue execution
-- Review patch application logs in the test execution output
+## 🤝 Contributing
 
-**Test fails even after patch**:
-- Manually verify patch was applied: `cd ~/ocs-upi-kvm/src/ocs-ci/ && git diff`
-- Check test execution logs in `rerun-logs/` directory
-- See `patches/README.md` for detailed patch information
+1. Keep sensitive data out of git
+2. Update documentation when adding features
+3. Test on both Windows and Linux
+4. Follow existing code style
 
-## Version-Specific Notes
+## 📄 License
 
-### ODF 4.14 - 4.18
-- Uses stable `v4.18.0` branch
-- Tested and validated for these versions
+Internal IBM project
 
-### ODF 4.19 - 4.20
-- Uses latest code from main branch
-- Supports newer features and fixes
+## 💡 Need Help?
 
-## Output Files
-
-- **execution_summary.txt**: Summary of all test executions with status
-- **rerun-logs/*.log**: Detailed logs for each test case execution
-
-## Support
-
-For issues or questions, refer to:
-- [ocs-upi-kvm repository](https://github.com/ocp-power-automation/ocs-upi-kvm)
-- [ocs-ci repository](https://github.com/red-hat-storage/ocs-ci)
+Check the [documentation](docs/) folder for detailed guides!

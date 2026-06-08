@@ -1,0 +1,16 @@
+{
+  "odf_version": "4.12",
+  "summary": "ODF 4.12.30",
+  "description": "Run tier1 and tier4a tests",
+  "components": [
+    "ODF QE"
+  ],
+  "reporter": "your-email@example.com",
+  "labels": [
+    "odf-zstream"
+  ],
+  "due_date": "17/Jun/26",
+  "fix_versions": [
+    "ODF v4.x.z"
+  ]
+}
