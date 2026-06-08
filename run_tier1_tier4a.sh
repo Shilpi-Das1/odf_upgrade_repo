@@ -60,7 +60,7 @@ export FIPS_ENABLEMENT="${FIPS_ENABLEMENT:-false}"
 export OCS_REGISTRY_IMAGE="${UPGRADE_OCS_IMAGE}"
 
 cd ${BASE_DIR}
-git clone https://github.com/ocp-power-automation/ocs-upi-kvm
+git clone https://github.com/shilpi-das1/ocs-upi-kvm
 cd ocs-upi-kvm
 git checkout "v${OCP_VERSION}.0"
 git submodule update --init
@@ -135,6 +135,10 @@ if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
     bash ${REPO_DIR}/check-crc.sh | tee -a ${LOG_DIR}/crc_log_after_tier4a.log
     oc adm must-gather --image=${MUST_GATHER_IMAGE} --dest-dir=${LOG_DIR}/must-gather-${OCS_VERSION}
     tar -cvzf ${LOG_DIR}/must-gather-${OCS_VERSION}.tar.gz ${LOG_DIR}/must-gather-${OCS_VERSION}
+    if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
+        echo "StorageCluster is Ready and Ceph cluster is healthy. After tier4a Rerun tests"
+        bash rerun_test.sh
+    fi
 else
     echo "Cluster not in a healthy state:"
     echo "  StorageCluster Phase: $storageClusterPhase"
