@@ -40,6 +40,9 @@ for deploy in $DEPLOYMENTS; do
 done
 
 echo "===== Verifying bluefs_buffered_io Settings After Restart ====="
+#Add Sleep 30s for pods to stabalize
+sleep 30
+TOOLS_POD=$(oc get pods -n openshift-storage | grep rook-ceph-tools | awk '{print $1}')
 echo "osd.0"
 oc -n $NAMESPACE rsh $TOOLS_POD sh -c "ceph config get osd.0  bluefs_buffered_io"
 echo "osd.1"
