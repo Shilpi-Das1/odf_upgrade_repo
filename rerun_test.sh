@@ -100,7 +100,7 @@ mkdir -p $FILE_PATH/patches
 rm -f $FILE_PATH/patches/.applied_patches
 
 # Activate Environment
-source ~/venv/bin/activate
+source $BASE_DIR/venv/bin/activate
 cd ${OCS_UPI_DIR}/src/ocs-ci
 
 # Function to apply patch if test case requires it
