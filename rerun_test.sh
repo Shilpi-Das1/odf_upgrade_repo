@@ -83,7 +83,7 @@ echo ""
 # Set FILE_PATH to absolute current directory so it remains valid after cd
 export FILE_PATH=$(pwd)/
 export RERUN_LOG_DIR="${LOG_DIR}/rerun-logs"
-SUMMARY_FILE="execution_summary.txt"
+SUMMARY_FILE="${LOG_DIR}/rerun-logs/execution_summary.txt"
 
 # Initialize Summary File
 echo "Test Execution Summary" > "$SUMMARY_FILE"
@@ -252,4 +252,4 @@ done
 echo ""
 echo "Execution Completed."
 echo "Summary:"
-cat "$FILE_PATH$SUMMARY_FILE"
+cat "$SUMMARY_FILE"
