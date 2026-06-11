@@ -182,15 +182,6 @@ if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
     echo "=========================================="
     oc adm must-gather --image=${MUST_GATHER_IMAGE} --dest-dir=${LOG_DIR}/must-gather-${OCS_VERSION}
     tar -cvzf ${LOG_DIR}/must-gather-${OCS_VERSION}.tar.gz ${LOG_DIR}/must-gather-${OCS_VERSION}
-else
-    echo "Cluster not in a healthy state:"
-    echo "  StorageCluster Phase: $storageClusterPhase"
-    echo "  CephCluster Health: $health"
-    oc adm must-gather --image=${MUST_GATHER_IMAGE} --dest-dir=${LOG_DIR}/must-gather-${OCS_VERSION}
-    tar -cvzf ${LOG_DIR}/must-gather-${OCS_VERSION}.tar.gz ${LOG_DIR}/must-gather-${OCS_VERSION}
-    rm -rf ${LOG_DIR}/must-gather-${OCS_VERSION}
-    exit 1
-fi
 
 
 
