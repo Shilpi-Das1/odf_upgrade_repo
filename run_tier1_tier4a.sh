@@ -182,10 +182,6 @@ if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
     echo "=========================================="
     oc adm must-gather --image=${MUST_GATHER_IMAGE} --dest-dir=${LOG_DIR}/must-gather-${OCS_VERSION}
     tar -cvzf ${LOG_DIR}/must-gather-${OCS_VERSION}.tar.gz ${LOG_DIR}/must-gather-${OCS_VERSION}
-    if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
-        echo "StorageCluster is Ready and Ceph cluster is healthy. After tier4a Rerun tests"
-        bash rerun_test.sh
-    fi
 else
     echo "Cluster not in a healthy state:"
     echo "  StorageCluster Phase: $storageClusterPhase"
