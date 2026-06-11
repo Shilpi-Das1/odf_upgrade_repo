@@ -148,9 +148,9 @@ if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
     
     echo ""
     echo "=========================================="
-    echo "Checking cluster health after Tier 4a..."
+    echo "Checking cluster health after Tier 4a Waiting for 5 mins to stabalize cluster..."
     echo "=========================================="
-    
+    sleep 300
     # Re-check StorageCluster phase after tier 4a
     storageClusterPhaseAfter=$(oc get storagecluster ocs-storagecluster -n openshift-storage -o jsonpath='{.status.phase}')
     healthAfter=$(oc get cephcluster -n openshift-storage -o jsonpath='{.items[0].status.ceph.health}')
