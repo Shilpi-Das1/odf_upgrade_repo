@@ -39,6 +39,7 @@ set -euo pipefail
 # Source common variables for multi-environment support
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common_vars.sh"
+mkdir -p ${LOG_DIR}
 
 # Color codes
 GREEN="\033[1;32m"
