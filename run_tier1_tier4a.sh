@@ -175,6 +175,7 @@ if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
         echo "  CephCluster Health: $healthAfter"
         echo "Skipping rerun tests due to unhealthy cluster state"
     fi
+fi
     
     echo ""
     echo "=========================================="
