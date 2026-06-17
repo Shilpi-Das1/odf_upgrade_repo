@@ -183,6 +183,7 @@ fi
     echo "=========================================="
     oc adm must-gather --image=${MUST_GATHER_IMAGE} --dest-dir=${LOG_DIR}/must-gather-${OCS_VERSION}
     tar -cvzf ${LOG_DIR}/must-gather-${OCS_VERSION}.tar.gz ${LOG_DIR}/must-gather-${OCS_VERSION}
+    rm -rf ${LOG_DIR}/must-gather-${OCS_VERSION}
 
 
 
