@@ -120,6 +120,8 @@ echo "Tier 1 tests completed with exit code: $TIER1_EXIT_CODE"
 echo "Sleeping 10 mins "
 sleep 600
 
+# Removing Debug pods
+oc delete pod $(oc get pods | grep debug | grep Completed | awk '{print $1}')
 
 bash ${REPO_DIR}/odf-build-info.sh | tee -a ${LOG_DIR}/odf-build-info-after-tier1.log
 bash ${REPO_DIR}/check-crc.sh | tee -a ${LOG_DIR}/crc_log_after_tier1.log
@@ -143,6 +145,8 @@ if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
     wait $TIER4A_PID
     TIER4A_EXIT_CODE=$?
     echo "Tier 4a tests completed with exit code: $TIER4A_EXIT_CODE"
+    # Removing Debug pods
+    oc delete pod $(oc get pods | grep debug | grep Completed | awk '{print $1}')
     bash ${REPO_DIR}/odf-build-info.sh | tee -a ${LOG_DIR}/odf-build-info-after-tier4a.log
     bash ${REPO_DIR}/check-crc.sh | tee -a ${LOG_DIR}/crc_log_after_tier4a.log
     
