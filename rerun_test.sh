@@ -81,9 +81,11 @@ echo "=========================================="
 echo ""
 
 # Set FILE_PATH to absolute current directory so it remains valid after cd
-export FILE_PATH=$(pwd)/
+export FILE_PATH=$(pwd)
 export RERUN_LOG_DIR="${LOG_DIR}/rerun-logs"
 SUMMARY_FILE="${LOG_DIR}/rerun-logs/execution_summary.txt"
+mkdir -p ${RERUN_LOG_DIR}
+mkdir -p $FILE_PATH/patches
 
 # Initialize Summary File
 echo "Test Execution Summary" > "$SUMMARY_FILE"
@@ -93,8 +95,7 @@ echo "Test Case | Tier | Status" >> "$SUMMARY_FILE"
 # Define Tiers to run
 TIERS=("1" "4a")
 
-mkdir -p ${RERUN_LOG_DIR}
-mkdir -p $FILE_PATH/patches
+
 
 # Clean up previous patch tracking
 rm -f $FILE_PATH/patches/.applied_patches
@@ -230,7 +231,7 @@ for TIER in "${TIERS[@]}"; do
                     STATUS="Fail"
                 fi
                 
-                echo "$TEST_CASE | Tier $TIER | $STATUS" >> "$FILE_PATH/$SUMMARY_FILE"
+                echo "$TEST_CASE | Tier $TIER | $STATUS" >> "$SUMMARY_FILE"
                 
                 escaped_pattern=$(echo "$TEST_CASE" | sed 's/[[]/\\[/g; s/[]]/\\]/g; s/\//\\\//g')
                 # sed -i "/$escaped_pattern$/d" "$INPUT_FILE" 
