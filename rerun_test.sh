@@ -208,7 +208,7 @@ for TIER in "${TIERS[@]}"; do
                 echo "Running Test: $TEST_CASE"
                 
                 # Executing COMMAND
-                nohup run-ci -m "tier$TIER_NO" --ocs-version $OCS_VERSION --ocsci-conf=conf/ocsci/production_powervs_upi.yaml --ocsci-conf conf/ocsci/lso_enable_rotational_disks.yaml --ocsci-conf ${OCS_CI_CONF} --cluster-name "ocstest" --cluster-path ${BASE_DIR}/ --collect-logs $TEST_CASE | tee ${RERUN_LOG_DIR}/$LOG_FILE_NAME.log 2>&1
+                nohup run-ci -m "tier$TIER_NO" --ocs-version $OCS_VERSION --ocsci-conf=${OCS_UPI_DIR}/conf/ocsci/production_powervs_upi.yaml --ocsci-conf ${OCS_UPI_DIR}/conf/ocsci/lso_enable_rotational_disks.yaml --ocsci-conf ${OCS_CI_CONF} --cluster-name "ocstest" --cluster-path ${BASE_DIR}/ --collect-logs $TEST_CASE | tee ${RERUN_LOG_DIR}/$LOG_FILE_NAME.log 2>&1
                 
                 # Capture Exit Code of run-ci (first command in pipe)
                 EXIT_CODE=${PIPESTATUS[0]}
