@@ -78,8 +78,8 @@ echo "$AUTH_YAML" > ${AUTH_YAML_PATH}
 cp ${AUTH_YAML_PATH} ${OCS_CI_DATA_DIR}/
 
 if [ "$UPGRADE_OCS_CHANNEL" == "4.14" ]; then
-    cp ${REPO_DIR}/patches/bucket-policy-normalize-414.patch \
-       ${OCS_UPI_DIR}/files/ocs-ci/
+    git -C ${OCS_UPI_DIR}/src/ocs-ci apply \
+    ${REPO_DIR}/patches/bucket-policy-normalize-414.patch
 fi
 
 # Create ocs-ci-conf.yaml using upgrade OCS values
