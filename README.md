@@ -7,6 +7,7 @@ Repository for ODF (OpenShift Data Foundation) upgrade testing and automation.
 All documentation is in the [`docs/`](docs/) folder:
 - **[Python Environment Setup](docs/PYTHON_ENV_GUIDE.md)** - Setup Python 3.11 for Windows & Linux
 - **[Jira Integration Guide](docs/JIRA_GUIDE.md)** - Create Jira subtasks automatically
+- **[Jenkins Artifact Fetcher Guide](docs/JENKINS_ARTIFACT_FETCHER_GUIDE.md)** - Fetch Jenkins artifacts and create JIRA tasks
 
 ## 🚀 Quick Start
 
@@ -52,8 +53,10 @@ odf_upgrade_repo/
 ├── docs/                          # 📚 All documentation
 │   ├── README.md
 │   ├── PYTHON_ENV_GUIDE.md
-│   └── JIRA_GUIDE.md
+│   ├── JIRA_GUIDE.md
+│   └── JENKINS_ARTIFACT_FETCHER_GUIDE.md
 ├── create_jira_subtask.py         # 🎯 Main Jira automation script
+├── fetch_jenkins_artifacts.py     # 🔄 Jenkins artifact fetcher & JIRA integration
 ├── odf_version_mapping.json       # 🗺️ ODF version to parent key mapping
 ├── subtask_config.json.example    # 📝 Configuration template
 ├── .env.example                   # 🔐 Credentials template
@@ -75,11 +78,21 @@ odf_upgrade_repo/
 
 ## ✨ Features
 
+### Jenkins Integration
+- ✅ Fetch artifacts from Jenkins builds automatically
+- ✅ Parse test-summary.txt and extract test results
+- ✅ Create JIRA subtasks with test results as comments
+- ✅ Upload test-summary.txt as attachment to JIRA
+- ✅ Automatic cleanup of downloaded artifacts
+- ✅ Cross-platform support (Windows & Linux)
+
 ### Jira Automation
 - ✅ Automatic ODF version to parent key mapping
 - ✅ Duplicate detection (prevents creating same subtask twice)
 - ✅ Configurable via JSON file
 - ✅ Supports all subtask fields (components, labels, due date, etc.)
+- ✅ Add multiple comments to JIRA tasks
+- ✅ Upload attachments to JIRA tasks
 
 ### Python Environment
 - ✅ Python 3.11 support
@@ -89,7 +102,25 @@ odf_upgrade_repo/
 
 ## 📖 Usage Examples
 
-### Create Subtask for ODF 4.18
+### Fetch Jenkins Artifacts and Create JIRA Task
+```bash
+# Fetch artifacts from Jenkins build #123 and create JIRA subtask
+python fetch_jenkins_artifacts.py --build-number 123 --due-date "17/Jun/26"
+
+# Short form
+python fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26"
+```
+
+This will:
+1. Download all artifacts from Jenkins build
+2. Parse test-summary.txt
+3. Update subtask_config.json
+4. Create JIRA subtask
+5. Add test results as comments
+6. Upload test-summary.txt as attachment
+7. Clean up downloaded files
+
+### Create Subtask for ODF 4.18 (Manual)
 ```json
 // subtask_config.json
 {
