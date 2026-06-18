@@ -180,14 +180,199 @@ if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
         echo "Skipping rerun tests due to unhealthy cluster state"
     fi
 fi
+
+echo ""
+echo "=========================================="
+echo "Collecting must-gather..."
+echo "=========================================="
+oc adm must-gather --image=${MUST_GATHER_IMAGE} --dest-dir=${LOG_DIR}/must-gather-${OCS_VERSION}
+tar -cvzf ${BASE_DIR}/must-gather-${OCS_VERSION}.tar.gz ${LOG_DIR}/must-gather-${OCS_VERSION}
+rm -rf ${LOG_DIR}/must-gather-${OCS_VERSION}
+
+echo ""
+echo "=========================================="
+echo "Generating Test Summary..."
+echo "=========================================="
+
+SUMMARY_FILE="${BASE_DIR}/test-summary-${OCS_VERSION}.txt"
+
+# Extract ODF build version from odf-after-upgrade.log
+ODF_BUILD_VERSION=""
+if [ -f "${LOG_DIR}/odf-after-upgrade.log" ]; then
+    # Look for the pattern: #######  ODF build  #######
+    # followed by the version number on the next line
+    ODF_BUILD_VERSION=$(sed -n '/^#######  ODF build  #######$/{ n; p; }' "${LOG_DIR}/odf-after-upgrade.log" | head -1 | tr -d '[:space:]')
     
-    echo ""
-    echo "=========================================="
-    echo "Collecting must-gather..."
-    echo "=========================================="
-    oc adm must-gather --image=${MUST_GATHER_IMAGE} --dest-dir=${LOG_DIR}/must-gather-${OCS_VERSION}
-    tar -cvzf ${LOG_DIR}/must-gather-${OCS_VERSION}.tar.gz ${LOG_DIR}/must-gather-${OCS_VERSION}
-    rm -rf ${LOG_DIR}/must-gather-${OCS_VERSION}
+    if [ -n "${ODF_BUILD_VERSION}" ]; then
+        echo "Extracted ODF Build Version: ${ODF_BUILD_VERSION}"
+    else
+        echo "Warning: Could not extract ODF build version from odf-after-upgrade.log"
+    fi
+else
+    echo "Warning: odf-after-upgrade.log not found, cannot extract build version"
+fi
 
+# Initialize summary file
+echo "========================================" > ${SUMMARY_FILE}
+echo "ODF Test Execution Summary" >> ${SUMMARY_FILE}
+echo "Generated: $(date)" >> ${SUMMARY_FILE}
+if [ -n "${ODF_BUILD_VERSION}" ]; then
+    echo "ODF Build: ${ODF_BUILD_VERSION}" >> ${SUMMARY_FILE}
+fi
+echo "========================================" >> ${SUMMARY_FILE}
+echo "" >> ${SUMMARY_FILE}
 
+# Add ODF before upgrade log
+if [ -f "${LOG_DIR}/odf-before-upgrade.log" ]; then
+    echo "========================================" >> ${SUMMARY_FILE}
+    if [ -n "${ODF_BUILD_VERSION}" ]; then
+        echo "ODF Build: ${ODF_BUILD_VERSION} - Status Before Upgrade" >> ${SUMMARY_FILE}
+    else
+        echo "ODF Status Before Upgrade" >> ${SUMMARY_FILE}
+    fi
+    echo "========================================" >> ${SUMMARY_FILE}
+    cat "${LOG_DIR}/odf-before-upgrade.log" >> ${SUMMARY_FILE}
+    echo "" >> ${SUMMARY_FILE}
+else
+    echo "ODF before upgrade log not found: ${LOG_DIR}/odf-before-upgrade.log" >> ${SUMMARY_FILE}
+    echo "" >> ${SUMMARY_FILE}
+fi
 
+# Add ODF after upgrade log
+if [ -f "${LOG_DIR}/odf-after-upgrade.log" ]; then
+    echo "========================================" >> ${SUMMARY_FILE}
+    if [ -n "${ODF_BUILD_VERSION}" ]; then
+        echo "ODF Build: ${ODF_BUILD_VERSION} - Status After Upgrade" >> ${SUMMARY_FILE}
+    else
+        echo "ODF Status After Upgrade" >> ${SUMMARY_FILE}
+    fi
+    echo "========================================" >> ${SUMMARY_FILE}
+    cat "${LOG_DIR}/odf-after-upgrade.log" >> ${SUMMARY_FILE}
+    echo "" >> ${SUMMARY_FILE}
+else
+    echo "ODF after upgrade log not found: ${LOG_DIR}/odf-after-upgrade.log" >> ${SUMMARY_FILE}
+    echo "" >> ${SUMMARY_FILE}
+fi
+
+# Function to extract test summary
+extract_summary() {
+    local tier=$1
+    local log_file=$2
+    local build_info_file=$3
+    local crc_log_file=$4
+    
+    echo "========================================" >> ${SUMMARY_FILE}
+    if [ -n "${ODF_BUILD_VERSION}" ]; then
+        echo "ODF Build: ${ODF_BUILD_VERSION} - Tier ${tier} Summary" >> ${SUMMARY_FILE}
+    else
+        echo "Tier ${tier} Summary" >> ${SUMMARY_FILE}
+    fi
+    echo "========================================" >> ${SUMMARY_FILE}
+    echo "" >> ${SUMMARY_FILE}
+    
+    if [ -f "${log_file}" ]; then
+        echo "Extracting summary from ${log_file}..." >> ${SUMMARY_FILE}
+        echo "" >> ${SUMMARY_FILE}
+        
+        # Extract short test summary info section
+        if grep -q "short test summary info" "${log_file}"; then
+            echo "--- Test Results ---" >> ${SUMMARY_FILE}
+            sed -n '/=* short test summary info =*/,/=.*=.*in.*=/p' "${log_file}" >> ${SUMMARY_FILE}
+            echo "" >> ${SUMMARY_FILE}
+        else
+            echo "No test summary found in log file." >> ${SUMMARY_FILE}
+            echo "" >> ${SUMMARY_FILE}
+        fi
+    else
+        echo "Log file not found: ${log_file}" >> ${SUMMARY_FILE}
+        echo "" >> ${SUMMARY_FILE}
+    fi
+    
+    # Print ODF build info
+    if [ -f "${build_info_file}" ]; then
+        echo "========================================" >> ${SUMMARY_FILE}
+        if [ -n "${ODF_BUILD_VERSION}" ]; then
+            echo "ODF Build: ${ODF_BUILD_VERSION} - Build Info (After Tier ${tier})" >> ${SUMMARY_FILE}
+        else
+            echo "ODF Build Info (After Tier ${tier})" >> ${SUMMARY_FILE}
+        fi
+        echo "========================================" >> ${SUMMARY_FILE}
+        cat "${build_info_file}" >> ${SUMMARY_FILE}
+        echo "" >> ${SUMMARY_FILE}
+    else
+        echo "Build info file not found: ${build_info_file}" >> ${SUMMARY_FILE}
+        echo "" >> ${SUMMARY_FILE}
+    fi
+    
+    # Print CRC log
+    if [ -f "${crc_log_file}" ]; then
+        echo "========================================" >> ${SUMMARY_FILE}
+        if [ -n "${ODF_BUILD_VERSION}" ]; then
+            echo "ODF Build: ${ODF_BUILD_VERSION} - CRC Log (After Tier ${tier})" >> ${SUMMARY_FILE}
+        else
+            echo "CRC Log (After Tier ${tier})" >> ${SUMMARY_FILE}
+        fi
+        echo "========================================" >> ${SUMMARY_FILE}
+        cat "${crc_log_file}" >> ${SUMMARY_FILE}
+        echo "" >> ${SUMMARY_FILE}
+    else
+        echo "CRC log file not found: ${crc_log_file}" >> ${SUMMARY_FILE}
+        echo "" >> ${SUMMARY_FILE}
+    fi
+}
+
+# Extract Tier 1 summary
+extract_summary "1" \
+    "${LOG_DIR}/tier1_${UPGRADE_OCS_CHANNEL}.log" \
+    "${LOG_DIR}/odf-build-info-after-tier1.log" \
+    "${LOG_DIR}/crc_log_after_tier1.log"
+
+# Extract Tier 4a summary
+extract_summary "4a" \
+    "${LOG_DIR}/tier4a_${UPGRADE_OCS_CHANNEL}.log" \
+    "${LOG_DIR}/odf-build-info-after-tier4a.log" \
+    "${LOG_DIR}/crc_log_after_tier4a.log"
+
+# Add execution summary (rerun summary)
+EXECUTION_SUMMARY="${LOG_DIR}/rerun-logs/execution_summary.txt"
+if [ -f "${EXECUTION_SUMMARY}" ]; then
+    echo "========================================" >> ${SUMMARY_FILE}
+    if [ -n "${ODF_BUILD_VERSION}" ]; then
+        echo "ODF Build: ${ODF_BUILD_VERSION} - Execution Summary (Rerun Summary)" >> ${SUMMARY_FILE}
+    else
+        echo "Execution Summary (Rerun Summary)" >> ${SUMMARY_FILE}
+    fi
+    echo "========================================" >> ${SUMMARY_FILE}
+    cat "${EXECUTION_SUMMARY}" >> ${SUMMARY_FILE}
+    echo "" >> ${SUMMARY_FILE}
+else
+    echo "Execution summary file not found: ${EXECUTION_SUMMARY}" >> ${SUMMARY_FILE}
+    echo "" >> ${SUMMARY_FILE}
+fi
+
+echo "========================================" >> ${SUMMARY_FILE}
+echo "End of Summary" >> ${SUMMARY_FILE}
+echo "========================================" >> ${SUMMARY_FILE}
+
+echo ""
+echo "Creating tar.gz archive of odf_tier_logs..."
+cd ${BASE_DIR}
+tar -czf odf_tier_logs-${OCS_VERSION}.tar.gz "${LOG_DIR}"
+echo "Archive created: ${BASE_DIR}/odf_tier_logs-${OCS_VERSION}.tar.gz"
+
+# Display summary to console
+echo ""
+echo "=========================================="
+echo "Test Summary Generated"
+echo "=========================================="
+cat ${SUMMARY_FILE}
+echo "=========================================="
+
+echo ""
+echo "=========================================="
+echo "All tasks completed successfully!"
+echo "=========================================="
+echo "Summary file: ${SUMMARY_FILE}"
+echo "Logs archive: ${BASE_DIR}/odf_tier_logs-${OCS_VERSION}.tar.gz"
+echo "Must-gather: ${BASE_DIR}/must-gather-${OCS_VERSION}.tar.gz"
+echo "=========================================="
