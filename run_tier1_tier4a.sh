@@ -209,6 +209,7 @@ echo "=========================================="
 oc adm must-gather --image=${MUST_GATHER_IMAGE} --dest-dir=${LOG_DIR}/must-gather-${ODF_BUILD_VERSION}
 tar -cvzf ${BASE_DIR}/must-gather-${ODF_BUILD_VERSION}.tar.gz ${LOG_DIR}/must-gather-${ODF_BUILD_VERSION}
 rm -rf ${LOG_DIR}/must-gather-${ODF_BUILD_VERSION}
+
 SUMMARY_FILE="${BASE_DIR}/test-summary-${ODF_BUILD_VERSION}.txt"
 # Initialize summary file
 echo "========================================" > ${SUMMARY_FILE}

@@ -14,10 +14,28 @@ __pycache__/
 # Environment Variables (IMPORTANT - Contains sensitive data!)
 .env
 
+# SSH Private Keys (IMPORTANT - Contains sensitive data!)
+id_rsa
+id_rsa.*
+*.pem
+*.key
+*_rsa
+*_dsa
+*_ecdsa
+*_ed25519
+
+# Google Drive Service Account Credentials (IMPORTANT - Contains sensitive data!)
+google_drive_service_account_creds.json
+*service_account*.json
+
 # Configuration files (may contain personal/sensitive data)
 subtask_config.json
 *.config.json
 odf_version_mapping.json
+
+# Artifacts (Downloaded files - can be large)
+jenkins_artifacts/
+bastion_artifacts/
 
 # IDE
 .vscode/

@@ -26,9 +26,9 @@ pip install -r requirements.txt
 
 **Configure credentials:**
 ```bash
-# Copy template
-copy .env.example .env  # Windows
-cp .env.example .env    # Linux
+# Copy template from examples folder
+copy examples\.env.example .env  # Windows
+cp examples/.env.example .env    # Linux
 
 # Edit .env with your details:
 # - JIRA_SERVER (e.g., https://your-company.atlassian.net)
@@ -41,12 +41,12 @@ cp .env.example .env    # Linux
 
 ```bash
 # Windows
-copy subtask_config.json.example subtask_config.json
-copy odf_version_mapping.json.example odf_version_mapping.json
+copy examples\subtask_config.json.example subtask_config.json
+copy examples\odf_version_mapping.json.example odf_version_mapping.json
 
 # Linux
-cp subtask_config.json.example subtask_config.json
-cp odf_version_mapping.json.example odf_version_mapping.json
+cp examples/subtask_config.json.example subtask_config.json
+cp examples/odf_version_mapping.json.example odf_version_mapping.json
 ```
 
 ### 3. Configure Version Mapping
@@ -77,7 +77,7 @@ cp odf_version_mapping.json.example odf_version_mapping.json
 
 **Run:**
 ```bash
-python create_jira_subtask.py
+python scripts/create_jira_subtask.py
 ```
 
 Done! ✅
@@ -100,7 +100,7 @@ See [Quick Start](#quick-start) section above for complete setup instructions.
 2. Install dependencies: `pip install -r requirements.txt`
 3. Copy template files (.env, subtask_config.json, odf_version_mapping.json)
 4. Configure all three files with your project details
-5. Run: `python create_jira_subtask.py`
+5. Run: `python scripts/create_jira_subtask.py`
 
 ---
 
@@ -155,16 +155,16 @@ See [Quick Start](#quick-start) section above for complete setup instructions.
 
 ```bash
 # Create subtask with default config
-python create_jira_subtask.py
+python scripts/create_jira_subtask.py
 
 # Use custom config file
-python create_jira_subtask.py --config my_config.json
+python scripts/create_jira_subtask.py --config my_config.json
 
 # List available ODF versions
-python create_jira_subtask.py --list-versions
+python scripts/create_jira_subtask.py --list-versions
 
 # Show help
-python create_jira_subtask.py --help
+python scripts/create_jira_subtask.py --help
 ```
 
 ---
@@ -175,9 +175,9 @@ The script uses `odf_version_mapping.json` to automatically map ODF versions to 
 
 **Setup:**
 ```bash
-# Copy the template
-copy odf_version_mapping.json.example odf_version_mapping.json  # Windows
-cp odf_version_mapping.json.example odf_version_mapping.json    # Linux
+# Copy the template from examples folder
+copy examples\odf_version_mapping.json.example odf_version_mapping.json  # Windows
+cp examples/odf_version_mapping.json.example odf_version_mapping.json    # Linux
 
 # Edit with your project's mappings
 ```
@@ -214,7 +214,7 @@ cp odf_version_mapping.json.example odf_version_mapping.json    # Linux
 
 **Run:**
 ```bash
-python create_jira_subtask.py --config bug_4.18.json
+python scripts/create_jira_subtask.py --config bug_4.18.json
 ```
 
 **Result:** Creates subtask under CSOP-546 (ODF 4.18 parent)
@@ -238,7 +238,7 @@ python create_jira_subtask.py --config bug_4.18.json
 
 **Run:**
 ```bash
-python create_jira_subtask.py --config feature_4.19.json
+python scripts/create_jira_subtask.py --config feature_4.19.json
 ```
 
 **Result:** Creates subtask under CSOP-665 (ODF 4.19 parent)
@@ -260,7 +260,7 @@ python create_jira_subtask.py --config feature_4.19.json
 
 **Run:**
 ```bash
-python create_jira_subtask.py --config custom_task.json
+python scripts/create_jira_subtask.py --config custom_task.json
 ```
 
 ---
@@ -296,7 +296,7 @@ python create_jira_subtask.py --config custom_task.json
 ### Error: "Unknown ODF version"
 **Solution:** Check available versions:
 ```bash
-python create_jira_subtask.py --list-versions
+python scripts/create_jira_subtask.py --list-versions
 ```
 
 ### Error: "Parent issue not found"
@@ -382,11 +382,11 @@ python -m json.tool subtask_config.json
 ## Files Reference
 
 ### Essential Files
-- **create_jira_subtask.py** - Main script
+- **scripts/create_jira_subtask.py** - Main script
 - **subtask_config.json** - Default configuration
 - **odf_version_mapping.json** - ODF version to parent key mapping
 - **.env** - Your credentials (DO NOT COMMIT)
-- **.env.example** - Template for credentials
+- **examples/.env.example** - Template for credentials
 - **JIRA_GUIDE.md** - This guide
 
 ### Supporting Files
@@ -409,10 +409,10 @@ python -m json.tool subtask_config.json
 
 | Task | Command |
 |------|---------|
-| Create subtask | `python create_jira_subtask.py` |
-| Custom config | `python create_jira_subtask.py --config file.json` |
-| List versions | `python create_jira_subtask.py --list-versions` |
-| Show help | `python create_jira_subtask.py --help` |
+| Create subtask | `python scripts/create_jira_subtask.py` |
+| Custom config | `python scripts/create_jira_subtask.py --config file.json` |
+| List versions | `python scripts/create_jira_subtask.py --list-versions` |
+| Show help | `python scripts/create_jira_subtask.py --help` |
 | Validate JSON | `python -m json.tool config.json` |
 
 **Minimal config:**

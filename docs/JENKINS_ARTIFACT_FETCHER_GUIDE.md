@@ -2,14 +2,15 @@
 
 ## Overview
 
-The `fetch_jenkins_artifacts.py` script automates the process of:
+The `scripts/fetch_jenkins_artifacts.py` script automates the process of:
 1. Fetching artifacts from Jenkins builds
 2. Parsing test results from `test-summary.txt`
 3. Updating JIRA subtask configuration
 4. Creating JIRA subtasks
 5. Adding test results as comments to JIRA
-6. Uploading test-summary.txt and odf_tier_logs-*.tar.gz as attachments
-7. Cleaning up downloaded artifacts
+6. Uploading test-summary.txt and odf_tier_logs-*.tar.gz as JIRA attachments
+7. **Uploading must-gather to Google Drive** (optional) in version-specific folders
+8. Cleaning up downloaded artifacts
 
 This script works on both **Linux** and **Windows** environments.
 
@@ -23,6 +24,10 @@ This script works on both **Linux** and **Windows** environments.
   - `jira>=3.5.0`
   - `python-dotenv>=1.0.0`
   - `requests>=2.28.0`
+  - `google-auth>=2.16.0`
+  - `google-auth-oauthlib>=1.0.0`
+  - `google-auth-httplib2>=0.1.0`
+  - `google-api-python-client>=2.80.0`
 
 ### 2. Environment Configuration
 Create a `.env` file in the project root with the following credentials:
@@ -38,14 +43,19 @@ JIRA_SERVER=https://your-jira-instance.atlassian.net
 JIRA_EMAIL=your-email@example.com
 JIRA_API_TOKEN=your-jira-api-token
 JIRA_PROJECT_KEY=YOUR_PROJECT_KEY
+
+# Google Drive Configuration (Optional)
+GOOGLE_DRIVE_PARENT_FOLDER_ID=17TvbLfm--fvpeBbnQvAnXeLBYrKC650y
+GOOGLE_DRIVE_CREDENTIALS_FILE=google_drive_service_account_creds.json
 ```
 
-**Note:** Never commit the `.env` file to git! Use `.env.example` as a template.
+**Note:** Never commit the `.env` file or `google_drive_service_account_creds.json` to git!
 
 ### 3. Additional Files Required
-- `subtask_config.json` or `subtask_config.json.example` - JIRA subtask configuration template
-- `odf_version_mapping.json` - Mapping of ODF versions to parent JIRA issues
-- `create_jira_subtask.py` - Script for creating JIRA subtasks
+- `subtask_config.json` or `examples/subtask_config.json.example` - JIRA subtask configuration template
+- `odf_version_mapping.json` or `examples/odf_version_mapping.json.example` - Mapping of ODF versions to parent JIRA issues
+- `scripts/create_jira_subtask.py` - Script for creating JIRA subtasks
+- `google_drive_service_account_creds.json` - Google Drive service account credentials (optional)
 
 ---
 
@@ -67,6 +77,50 @@ JIRA_PROJECT_KEY=YOUR_PROJECT_KEY
 4. Click "Create"
 5. Copy the token immediately
 
+### Google Drive Service Account (Optional)
+
+#### Step 1: Create Google Cloud Project
+1. Open: https://console.cloud.google.com/
+2. Click **Select Project** → **New Project**
+3. Enter project name (e.g., "ODF-Drive-Uploader")
+4. Click **Create**
+5. Select the newly created project
+
+#### Step 2: Enable Google Drive API
+1. Go to **APIs & Services** → **Library**
+2. Search: **Google Drive API**
+3. Click on it → Click **Enable**
+
+#### Step 3: Create Service Account
+1. Go to **APIs & Services** → **Credentials**
+2. Click **Create Credentials** → **Service Account**
+3. Enter name (e.g., "drive-uploader")
+4. Click **Create & Continue**
+5. Skip roles (click **Continue**)
+6. Click **Done**
+
+#### Step 4: Generate JSON Key
+1. Click on your service account (from the list)
+2. Go to **Keys** tab
+3. Click **Add Key** → **Create New Key**
+4. Select **JSON** format
+5. Click **Create** (file downloads automatically)
+6. Rename the downloaded file to `google_drive_service_account_creds.json`
+7. Place it in the project root directory
+
+#### Step 5: Share Google Drive Folder
+1. Open the JSON credentials file
+2. Find the `client_email` field (looks like: `drive-uploader@project-id.iam.gserviceaccount.com`)
+3. Go to your Google Drive folder (the parent folder where you want to upload files)
+4. Right-click → **Share**
+5. Add the service account email
+6. Give it **Editor** permissions
+7. Click **Send**
+
+**Important:**
+- Never commit the credentials JSON file to git! It's already in `.gitignore`.
+- The service account email must have access to the Google Drive folder
+
 ---
 
 ## Usage
@@ -74,7 +128,7 @@ JIRA_PROJECT_KEY=YOUR_PROJECT_KEY
 ### Basic Command
 
 ```bash
-python fetch_jenkins_artifacts.py --build-number <BUILD_NUMBER> --due-date "<DUE_DATE>"
+python scripts/fetch_jenkins_artifacts.py --build-number <BUILD_NUMBER> --due-date "<DUE_DATE>"
 ```
 
 ### Parameters
@@ -93,32 +147,32 @@ python fetch_jenkins_artifacts.py --build-number <BUILD_NUMBER> --due-date "<DUE
 **Linux/Mac:**
 ```bash
 # Full format
-python fetch_jenkins_artifacts.py --build-number 123 --due-date "17/Jun/26"
+python scripts/fetch_jenkins_artifacts.py --build-number 123 --due-date "17/Jun/26"
 
 # Short format
-python fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26"
+python scripts/fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26"
 
 # More examples with different dates
-python fetch_jenkins_artifacts.py -b 789 -d "5/Jan/27"
-python fetch_jenkins_artifacts.py -b 100 -d "25/Mar/26"
+python scripts/fetch_jenkins_artifacts.py -b 789 -d "5/Jan/27"
+python scripts/fetch_jenkins_artifacts.py -b 100 -d "25/Mar/26"
 ```
 
 **Windows (PowerShell):**
 ```powershell
 # Full format
-python fetch_jenkins_artifacts.py --build-number 123 --due-date "17/Jun/26"
+python scripts/fetch_jenkins_artifacts.py --build-number 123 --due-date "17/Jun/26"
 
 # Short format
-python fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26"
+python scripts/fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26"
 ```
 
 **Windows (Command Prompt):**
 ```cmd
 # Full format
-python fetch_jenkins_artifacts.py --build-number 123 --due-date "17/Jun/26"
+python scripts/fetch_jenkins_artifacts.py --build-number 123 --due-date "17/Jun/26"
 
 # Short format
-python fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26"
+python scripts/fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26"
 ```
 
 **Date Format Notes:**
@@ -191,7 +245,7 @@ The script updates (or creates) `subtask_config.json` with:
 ```
 
 ### Step 4: Create JIRA Subtask
-The script runs `create_jira_subtask.py` which:
+The script runs `scripts/create_jira_subtask.py` which:
 - Reads the updated `subtask_config.json`
 - Maps ODF version to parent JIRA issue (using `odf_version_mapping.json`)
 - Creates a new subtask (or finds existing one with same summary)
@@ -355,13 +409,21 @@ URL: https://your-jira-instance.atlassian.net/browse/CSOP-1234
 
 ```
 project-root/
-├── fetch_jenkins_artifacts.py    # Main script
-├── create_jira_subtask.py        # JIRA subtask creation
+├── scripts/
+│   ├── fetch_jenkins_artifacts.py    # Main script
+│   ├── create_jira_subtask.py        # JIRA subtask creation
+│   └── test_gdrive_connection.py     # Google Drive test script
+├── examples/
+│   ├── .env.example                  # Credentials template
+│   ├── subtask_config.json.example   # JIRA config template
+│   └── odf_version_mapping.json.example  # Version mapping template
+├── setup/
+│   ├── setup_python_env.ps1          # Windows setup script
+│   ├── setup_python_env.sh           # Linux setup script
+│   └── activate_venv_bypass.bat      # Windows activation helper
 ├── subtask_config.json           # JIRA configuration (auto-updated)
-├── subtask_config.json.example   # Template
 ├── odf_version_mapping.json      # ODF version to parent mapping
 ├── .env                          # Credentials (DO NOT COMMIT)
-├── .env.example                  # Template
 ├── requirements.txt              # Python dependencies
 ├── jenkins_artifacts/            # Temporary (auto-deleted)
 │   └── test-summary.txt
@@ -391,7 +453,7 @@ stage('Create JIRA Subtask') {
     steps {
         script {
             sh """
-                python fetch_jenkins_artifacts.py \
+                python scripts/fetch_jenkins_artifacts.py \
                     --build-number ${BUILD_NUMBER} \
                     --due-date "17/Jun/26"
             """
@@ -404,7 +466,7 @@ stage('Create JIRA Subtask') {
 ```yaml
 - name: Create JIRA Subtask
   run: |
-    python fetch_jenkins_artifacts.py \
+    python scripts/fetch_jenkins_artifacts.py \
       --build-number ${{ github.run_number }} \
       --due-date "17/Jun/26"
   env:

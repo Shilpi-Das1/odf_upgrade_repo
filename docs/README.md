@@ -15,7 +15,7 @@ This folder contains all documentation for the ODF Upgrade Repository.
 ### Python Setup
 ```bash
 # Windows
-activate_venv_bypass.bat
+setup\activate_venv_bypass.bat
 pip install -r requirements.txt
 
 # Linux
@@ -26,13 +26,13 @@ pip install -r requirements.txt
 ### Jira Subtask Creation
 ```bash
 # Create subtask
-python create_jira_subtask.py
+python scripts/create_jira_subtask.py
 
 # List ODF versions
-python create_jira_subtask.py --list-versions
+python scripts/create_jira_subtask.py --list-versions
 
 # List issue types
-python create_jira_subtask.py --list-issue-types
+python scripts/create_jira_subtask.py --list-issue-types
 ```
 
 ## 📁 Project Structure
@@ -43,14 +43,20 @@ odf_upgrade_repo/
 │   ├── README.md                  # This file
 │   ├── PYTHON_ENV_GUIDE.md        # Python setup guide
 │   └── JIRA_GUIDE.md              # Jira integration guide
-├── create_jira_subtask.py         # Main Jira script
+├── scripts/
+│   ├── create_jira_subtask.py     # Main Jira script
+│   ├── fetch_jenkins_artifacts.py # Jenkins artifact fetcher
+│   └── test_gdrive_connection.py  # Google Drive test script
+├── examples/
+│   ├── .env.example                   # Credentials template
+│   ├── subtask_config.json.example    # Configuration template
+│   └── odf_version_mapping.json.example  # Version mapping template
+├── setup/
+│   ├── setup_python_env.ps1           # Windows setup script
+│   ├── setup_python_env.sh            # Linux setup script
+│   └── activate_venv_bypass.bat       # Windows activation helper
 ├── odf_version_mapping.json       # ODF version to parent key mapping
-├── subtask_config.json.example    # Configuration template
-├── .env.example                   # Credentials template
 ├── requirements.txt               # Python dependencies
-├── setup_python_env.ps1           # Windows setup script
-├── setup_python_env.sh            # Linux setup script
-└── activate_venv_bypass.bat       # Windows activation helper
 ```
 
 ## 🔒 Security
@@ -67,8 +73,8 @@ odf_upgrade_repo/
 
 2. **Configure Jira**
    - Read: [JIRA_GUIDE.md](JIRA_GUIDE.md)
-   - Copy `.env.example` to `.env`
-   - Copy `subtask_config.json.example` to `subtask_config.json`
+   - Copy `examples/.env.example` to `.env`
+   - Copy `examples/subtask_config.json.example` to `subtask_config.json`
    - Fill in your credentials and configuration
 
 3. **Start Using**

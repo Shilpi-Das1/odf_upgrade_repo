@@ -8,6 +8,7 @@ All documentation is in the [`docs/`](docs/) folder:
 - **[Python Environment Setup](docs/PYTHON_ENV_GUIDE.md)** - Setup Python 3.11 for Windows & Linux
 - **[Jira Integration Guide](docs/JIRA_GUIDE.md)** - Create Jira subtasks automatically
 - **[Jenkins Artifact Fetcher Guide](docs/JENKINS_ARTIFACT_FETCHER_GUIDE.md)** - Fetch Jenkins artifacts and create JIRA tasks
+- **[Bastion Artifact Fetcher Guide](docs/BASTION_ARTIFACT_FETCHER_GUIDE.md)** - Fetch artifacts from bastion machine and create JIRA tasks
 
 ## 🚀 Quick Start
 
@@ -15,7 +16,7 @@ All documentation is in the [`docs/`](docs/) folder:
 
 **Windows:**
 ```cmd
-activate_venv_bypass.bat
+setup\activate_venv_bypass.bat
 pip install -r requirements.txt
 ```
 
@@ -54,16 +55,27 @@ odf_upgrade_repo/
 │   ├── README.md
 │   ├── PYTHON_ENV_GUIDE.md
 │   ├── JIRA_GUIDE.md
-│   └── JENKINS_ARTIFACT_FETCHER_GUIDE.md
-├── create_jira_subtask.py         # 🎯 Main Jira automation script
-├── fetch_jenkins_artifacts.py     # 🔄 Jenkins artifact fetcher & JIRA integration
+│   ├── JENKINS_ARTIFACT_FETCHER_GUIDE.md
+│   └── BASTION_ARTIFACT_FETCHER_GUIDE.md
+├── scripts/                       # 🔧 Python automation scripts
+│   ├── create_jira_subtask.py    # 🎯 Main Jira automation script
+│   ├── fetch_jenkins_artifacts.py # 🔄 Jenkins artifact fetcher & JIRA integration
+│   ├── fetch_bastion_artifacts.py # 🖥️ Bastion artifact fetcher & JIRA integration
+│   └── jira_utils.py             # 🛠️ Shared JIRA utilities
+├── examples/                      # 📋 Configuration templates
+│   ├── .env.example
+│   ├── subtask_config.json.example
+│   └── odf_version_mapping.json.example
+├── id_rsa                         # 🔑 SSH private key (DO NOT COMMIT)
 ├── odf_version_mapping.json       # 🗺️ ODF version to parent key mapping
-├── subtask_config.json.example    # 📝 Configuration template
-├── .env.example                   # 🔐 Credentials template
+├── subtask_config.json            # 📝 JIRA configuration
+├── .env                           # 🔐 Credentials (DO NOT COMMIT)
 ├── requirements.txt               # 📦 Python dependencies
-├── setup_python_env.ps1           # 🪟 Windows setup
-├── setup_python_env.sh            # 🐧 Linux setup
-└── activate_venv_bypass.bat       # ⚡ Quick activation (Windows)
+├── setup/                         # ⚙️ Setup scripts
+│   ├── setup_python_env.ps1      # 🪟 Windows setup
+│   ├── setup_python_env.sh       # 🐧 Linux setup
+│   └── activate_venv_bypass.bat  # ⚡ Quick activation (Windows)
+└── .gitignore                     # 🚫 Protects sensitive files
 ```
 
 ## 🔒 Security
@@ -82,8 +94,19 @@ odf_upgrade_repo/
 - ✅ Fetch artifacts from Jenkins builds automatically
 - ✅ Parse test-summary.txt and extract test results
 - ✅ Create JIRA subtasks with test results as comments
-- ✅ Upload test-summary.txt as attachment to JIRA
+- ✅ Upload test-summary.txt and odf_tier_logs as attachments to JIRA
 - ✅ Automatic cleanup of downloaded artifacts
+- ✅ Resume capability for failed runs
+- ✅ Cross-platform support (Windows & Linux)
+
+### Bastion Integration
+- ✅ Fetch artifacts from bastion machine via SSH/SCP
+- ✅ Support for versioned filenames (e.g., test-summary-4.21.9-1.txt)
+- ✅ Parse test-summary.txt and extract test results
+- ✅ Create JIRA subtasks with test results as comments
+- ✅ Upload test-summary.txt and odf_tier_logs as attachments to JIRA
+- ✅ Automatic cleanup of downloaded artifacts
+- ✅ Resume capability for failed runs
 - ✅ Cross-platform support (Windows & Linux)
 
 ### Jira Automation
@@ -93,6 +116,7 @@ odf_upgrade_repo/
 - ✅ Supports all subtask fields (components, labels, due date, etc.)
 - ✅ Add multiple comments to JIRA tasks
 - ✅ Upload attachments to JIRA tasks
+- ✅ Shared utility module for consistent JIRA operations
 
 ### Python Environment
 - ✅ Python 3.11 support
@@ -105,10 +129,13 @@ odf_upgrade_repo/
 ### Fetch Jenkins Artifacts and Create JIRA Task
 ```bash
 # Fetch artifacts from Jenkins build #123 and create JIRA subtask
-python fetch_jenkins_artifacts.py --build-number 123 --due-date "17/Jun/26"
+python scripts/fetch_jenkins_artifacts.py --build-number 123 --due-date "17/Jun/26"
 
 # Short form
-python fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26"
+python scripts/fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26"
+
+# Resume after failure
+python scripts/fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26" --resume
 ```
 
 This will:
@@ -117,7 +144,28 @@ This will:
 3. Update subtask_config.json
 4. Create JIRA subtask
 5. Add test results as comments
-6. Upload test-summary.txt as attachment
+6. Upload test-summary.txt and odf_tier_logs as attachments
+7. Clean up downloaded files
+
+### Fetch Bastion Artifacts and Create JIRA Task
+```bash
+# Fetch artifacts from bastion machine and create JIRA subtask
+python scripts/fetch_bastion_artifacts.py --ip 192.168.1.100 --due-date "17/Jun/26"
+
+# With custom SSH key
+python scripts/fetch_bastion_artifacts.py --ip 192.168.1.100 --key-file ~/.ssh/my_key
+
+# Resume after failure
+python scripts/fetch_bastion_artifacts.py --ip 192.168.1.100 --resume
+```
+
+This will:
+1. Download artifacts from bastion machine via SSH/SCP
+2. Parse test-summary.txt
+3. Update subtask_config.json
+4. Create JIRA subtask
+5. Add test results as comments
+6. Upload test-summary.txt and odf_tier_logs as attachments
 7. Clean up downloaded files
 
 ### Create Subtask for ODF 4.18 (Manual)

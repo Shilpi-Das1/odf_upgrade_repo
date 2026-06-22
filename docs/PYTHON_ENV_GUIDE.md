@@ -21,7 +21,7 @@
 py -3.11 -m venv venv
 
 # 3. Activate (easiest method)
-activate_venv_bypass.bat
+setup\activate_venv_bypass.bat
 
 # 4. Install dependencies
 python -m pip install --upgrade pip
@@ -83,7 +83,7 @@ py -3.11 -m venv venv
 
 **Method 1: Using Batch File (Easiest - No Permission Issues)**
 ```cmd
-activate_venv_bypass.bat
+setup\activate_venv_bypass.bat
 ```
 
 **Method 2: Using CMD**
@@ -182,7 +182,7 @@ pip list
 **Windows:**
 ```cmd
 # Easiest method (batch file)
-activate_venv_bypass.bat
+setup\activate_venv_bypass.bat
 
 # Or using CMD
 venv\Scripts\activate.bat
@@ -317,8 +317,9 @@ pip search package-name
 - **activate_venv_bypass.bat** - Windows activation script (no permission issues)
 
 ### Automation Scripts (Optional)
-- **setup_python_env.ps1** - Windows automated setup
-- **setup_python_env.sh** - Linux automated setup
+- **setup/setup_python_env.ps1** - Windows automated setup
+- **setup/setup_python_env.sh** - Linux automated setup
+- **setup/activate_venv_bypass.bat** - Windows activation helper
 
 ### Helper Scripts (Optional)
 - **activate_venv.ps1** - PowerShell activation helper
@@ -344,7 +345,7 @@ pip search package-name
 |------|---------|-------|
 | Install Python 3.11 | Download from python.org | `sudo apt install python3.11` |
 | Create venv | `py -3.11 -m venv venv` | `python3.11 -m venv venv` |
-| Activate | `activate_venv_bypass.bat` | `source venv/bin/activate` |
+| Activate | `setup\activate_venv_bypass.bat` | `source venv/bin/activate` |
 | Deactivate | `deactivate` | `deactivate` |
 | Install packages | `pip install -r requirements.txt` | `pip install -r requirements.txt` |
 | Check Python | `python --version` | `python --version` |
