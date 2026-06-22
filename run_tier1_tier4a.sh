@@ -181,20 +181,12 @@ if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
     fi
 fi
 
-echo ""
-echo "=========================================="
-echo "Collecting must-gather..."
-echo "=========================================="
-oc adm must-gather --image=${MUST_GATHER_IMAGE} --dest-dir=${LOG_DIR}/must-gather-${OCS_VERSION}
-tar -cvzf ${BASE_DIR}/must-gather-${OCS_VERSION}.tar.gz ${LOG_DIR}/must-gather-${OCS_VERSION}
-rm -rf ${LOG_DIR}/must-gather-${OCS_VERSION}
+
 
 echo ""
 echo "=========================================="
 echo "Generating Test Summary..."
 echo "=========================================="
-
-SUMMARY_FILE="${BASE_DIR}/test-summary-${OCS_VERSION}.txt"
 
 # Extract ODF build version from odf-after-upgrade.log
 ODF_BUILD_VERSION=""
@@ -202,7 +194,6 @@ if [ -f "${LOG_DIR}/odf-after-upgrade.log" ]; then
     # Look for the pattern: #######  ODF build  #######
     # followed by the version number on the next line
     ODF_BUILD_VERSION=$(sed -n '/^#######  ODF build  #######$/{ n; p; }' "${LOG_DIR}/odf-after-upgrade.log" | head -1 | tr -d '[:space:]')
-    
     if [ -n "${ODF_BUILD_VERSION}" ]; then
         echo "Extracted ODF Build Version: ${ODF_BUILD_VERSION}"
     else
@@ -211,7 +202,14 @@ if [ -f "${LOG_DIR}/odf-after-upgrade.log" ]; then
 else
     echo "Warning: odf-after-upgrade.log not found, cannot extract build version"
 fi
-
+echo ""
+echo "=========================================="
+echo "Collecting must-gather..."
+echo "=========================================="
+oc adm must-gather --image=${MUST_GATHER_IMAGE} --dest-dir=${LOG_DIR}/must-gather-${ODF_BUILD_VERSION}
+tar -cvzf ${BASE_DIR}/must-gather-${ODF_BUILD_VERSION}.tar.gz ${LOG_DIR}/must-gather-${ODF_BUILD_VERSION}
+rm -rf ${LOG_DIR}/must-gather-${ODF_BUILD_VERSION}
+SUMMARY_FILE="${BASE_DIR}/test-summary-${ODF_BUILD_VERSION}.txt"
 # Initialize summary file
 echo "========================================" > ${SUMMARY_FILE}
 echo "ODF Test Execution Summary" >> ${SUMMARY_FILE}
@@ -357,8 +355,8 @@ echo "========================================" >> ${SUMMARY_FILE}
 echo ""
 echo "Creating tar.gz archive of odf_tier_logs..."
 cd ${BASE_DIR}
-tar -czf odf_tier_logs-${OCS_VERSION}.tar.gz "${LOG_DIR}"
-echo "Archive created: ${BASE_DIR}/odf_tier_logs-${OCS_VERSION}.tar.gz"
+tar -czf odf_tier_logs-${ODF_BUILD_VERSION}.tar.gz "${LOG_DIR}"
+echo "Archive created: ${BASE_DIR}/odf_tier_logs-${ODF_BUILD_VERSION}.tar.gz"
 
 # Display summary to console
 echo ""
@@ -373,6 +371,6 @@ echo "=========================================="
 echo "All tasks completed successfully!"
 echo "=========================================="
 echo "Summary file: ${SUMMARY_FILE}"
-echo "Logs archive: ${BASE_DIR}/odf_tier_logs-${OCS_VERSION}.tar.gz"
-echo "Must-gather: ${BASE_DIR}/must-gather-${OCS_VERSION}.tar.gz"
+echo "Logs archive: ${BASE_DIR}/odf_tier_logs-${ODF_BUILD_VERSION}.tar.gz"
+echo "Must-gather: ${BASE_DIR}/must-gather-${ODF_BUILD_VERSION}.tar.gz"
 echo "=========================================="
