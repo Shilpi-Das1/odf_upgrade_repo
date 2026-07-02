@@ -39,14 +39,14 @@ for deploy in $DEPLOYMENTS; do
   oc rollout status -n "$NAMESPACE" deployment "$deploy_name" --timeout=300s
 done
 
-echo "===== Verifying bluefs_buffered_io Settings After Restart ====="
+#echo "===== Verifying bluefs_buffered_io Settings After Restart ====="
 #Add Sleep 30s for pods to stabalize
-sleep 30
-TOOLS_POD=$(oc get pods -n openshift-storage | grep rook-ceph-tools | awk '{print $1}')
-echo "osd.0"
-oc -n $NAMESPACE rsh $TOOLS_POD sh -c "ceph config get osd.0  bluefs_buffered_io"
-echo "osd.1"
-oc -n $NAMESPACE rsh $TOOLS_POD sh -c "ceph config get osd.1  bluefs_buffered_io"
-echo "osd.2"
-oc -n $NAMESPACE rsh $TOOLS_POD sh -c "ceph config get osd.2  bluefs_buffered_io"
+#sleep 30
+#TOOLS_POD=$(oc get pods -n openshift-storage | grep rook-ceph-tools | awk '{print $1}')
+#echo "osd.0"
+#oc -n $NAMESPACE rsh $TOOLS_POD sh -c "ceph config get osd.0  bluefs_buffered_io"
+#echo "osd.1"
+#oc -n $NAMESPACE rsh $TOOLS_POD sh -c "ceph config get osd.1  bluefs_buffered_io"
+#echo "osd.2"
+#oc -n $NAMESPACE rsh $TOOLS_POD sh -c "ceph config get osd.2  bluefs_buffered_io"
 
