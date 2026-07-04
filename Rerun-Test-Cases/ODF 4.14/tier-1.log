@@ -1,0 +1,4 @@
+FAILED tests/functional/object/mcg/test_bucket_creation_deletion.py::TestBucketCreationAndDeletion::test_bucket_creation_deletion[3-S3-DEFAULT-BACKINGSTORE]
+FAILED tests/functional/object/mcg/test_bucket_deletion.py::TestBucketDeletion::test_bucket_delete_with_objects[CLI-IBMCOS]
+FAILED tests/functional/object/mcg/test_object_integrity.py::TestObjectIntegrity::test_check_object_integrity[DEFAULT-BACKINGSTORE]
+FAILED tests/functional/object/mcg/test_object_integrity.py::TestObjectIntegrity::test_check_object_integrity[AWS-OC-1]
