@@ -69,4 +69,6 @@ htmlcov/
 .dmypy.json
 dmypy.json
 
+oauth_client_secrets.json 
+.gdrive_oauth_token.json
 # Made with Bob

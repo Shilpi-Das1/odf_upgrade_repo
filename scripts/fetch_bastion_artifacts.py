@@ -13,16 +13,13 @@ Usage:
 
 import os
 import sys
-import json
-import re
 import argparse
 import shutil
 import subprocess
 from pathlib import Path
-from datetime import datetime
 from dotenv import load_dotenv
 import urllib3
-from jira_utils import JiraHelper
+from jira_utils import JiraHelper, GDriveHelper
 
 # Disable SSL warnings for self-signed certificates
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -50,7 +47,18 @@ class BastionArtifactFetcher:
         # Initialize JIRA helper
         self.jira_helper = JiraHelper()
         self.jira_server = self.jira_helper.jira_server
-        
+
+        # Initialize Google Drive helper (optional — skipped if not configured)
+        self.gdrive_helper = None
+        if os.getenv('GOOGLE_DRIVE_PARENT_FOLDER_ID'):
+            try:
+                self.gdrive_helper = GDriveHelper()
+            except Exception as e:
+                print(f"⚠ Warning: Could not connect to Google Drive: {e}")
+                print(f"  Must-gather will not be uploaded to Google Drive")
+        else:
+            print("⚠ GOOGLE_DRIVE_PARENT_FOLDER_ID not set — Google Drive upload skipped")
+
         # Create artifacts directory
         self.artifacts_dir = Path("bastion_artifacts")
         self.artifacts_dir.mkdir(exist_ok=True)
@@ -194,11 +202,21 @@ class BastionArtifactFetcher:
                 self.jira_helper.upload_attachment_to_jira(subtask_key, tier_logs_tar_path, skip_if_exists=resume)
             else:
                 print(f"⚠ Warning: odf_tier_logs*.tar.gz not found in artifacts")
-            
+
+            # Step 9: Upload must-gather to Google Drive (optional)
+            if self.gdrive_helper:
+                self.gdrive_helper.upload_must_gather(
+                    parsed_data['odf_build_full'], self.artifacts_dir
+                )
+            else:
+                print(f"\n{'='*60}")
+                print(f"⚠ Google Drive upload skipped (not configured)")
+                print(f"{'='*60}")
+
             # Mark all steps as successful
             all_steps_successful = True
-            
-            # Step 9: Cleanup artifacts only if all steps succeeded
+
+            # Step 10: Cleanup artifacts only if all steps succeeded
             self.cleanup_artifacts()
             
             print(f"\n{'='*60}")

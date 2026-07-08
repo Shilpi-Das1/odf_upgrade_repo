@@ -95,7 +95,62 @@ echo "Test Case | Tier | Status" >> "$SUMMARY_FILE"
 # Define Tiers to run
 TIERS=("1" "4a")
 
+# ---------------------------------------------------------------------------
+# Dynamically populate Rerun-Test-Cases from live tier logs (if available).
+# Source logs:
+#   - Tier 1:  ${LOG_DIR}/tier1_${OCS_VERSION}.log
+#   - Tier 4a: ${LOG_DIR}/tier4a_${OCS_VERSION}.log
+#
+# Rules applied during extraction:
+#   - Only lines starting with "FAILED" are kept (ERROR lines are skipped)
+#   - Test cases whose path contains "/ui/" are excluded
+#   - The destination files (Rerun-Test-Cases/ODF <ver>/tier-1.log etc.)
+#     are overwritten only when a source log is found; otherwise the existing
+#     static file is left untouched so the rerun logic below still works.
+# ---------------------------------------------------------------------------
+declare -A TIER_SOURCE_LOG
+TIER_SOURCE_LOG["1"]="${LOG_DIR}/tier1_${OCS_VERSION}.log"
+TIER_SOURCE_LOG["4a"]="${LOG_DIR}/tier4a_${OCS_VERSION}.log"
 
+declare -A TIER_DEST_FILE
+TIER_DEST_FILE["1"]="${FILE_PATH}/Rerun-Test-Cases/ODF ${OCS_VERSION}/tier-1.log"
+TIER_DEST_FILE["4a"]="${FILE_PATH}/Rerun-Test-Cases/ODF ${OCS_VERSION}/tier-4a.log"
+
+for TIER in "${TIERS[@]}"; do
+    SRC_LOG="${TIER_SOURCE_LOG[$TIER]}"
+    DEST_FILE="${TIER_DEST_FILE[$TIER]}"
+
+    # Always ensure the destination directory exists so the rerun loop's
+    mkdir -p "$(dirname "$DEST_FILE")"
+
+    if [ -f "$SRC_LOG" ]; then
+        echo "----------------------------------------"
+        echo "Extracting failed tests for Tier $TIER from: $SRC_LOG"
+
+        if grep -q "short test summary info" "$SRC_LOG"; then
+            # Extract only from the LAST short test summary section to avoid
+            # duplicates when the log contains multiple concatenated runs.
+            # sort -u deduplicates any remaining identical lines.
+            awk '/short test summary info/{found=1; block=""} found{block=block $0 "\n"} END{printf "%s", block}' "$SRC_LOG" \
+                | grep "^FAILED " \
+                | grep -v "/ui/" \
+                | sed 's/[[:space:]]*$//' \
+                | sort -u \
+                > "$DEST_FILE"
+        else
+            echo "  ⚠ 'short test summary info' section not found in $SRC_LOG"
+            echo "  → Using existing static file (if present): ${DEST_FILE}"
+        fi
+
+        COUNT=$(wc -l < "$DEST_FILE" | tr -d ' ')
+        echo "  → $COUNT test case(s) written to: $DEST_FILE"
+    else
+        echo "----------------------------------------"
+        echo "Source log not found for Tier $TIER: $SRC_LOG"
+        echo "  → Using existing static file (if present): ${DEST_FILE}"
+    fi
+done
+echo ""
 
 # Clean up previous patch tracking
 rm -f $FILE_PATH/patches/.applied_patches
