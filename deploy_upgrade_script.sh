@@ -320,7 +320,7 @@ oc patch subscription odf-operator \
   --type=merge \
   -p "{\"spec\": {\"channel\": \"stable-${UPGRADE_OCS_CHANNEL}\"}}"
 
-sleep 300
+sleep 900
 
 log "Waiting for StorageCluster to be Ready..."
 for i in {1..30}; do
