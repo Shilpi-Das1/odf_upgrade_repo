@@ -88,6 +88,15 @@ ENV_DATA:
   local_storage_allow_rotational_disks: true
   ocs_version: '${UPGRADE_OCS_CHANNEL}'
   number_of_storage_disks: 8
+EOF
+
+if [ -n "${BASTION_IP}" ]; then
+cat >> ${OCS_CI_CONF} << EOF
+  bastion_ip: '${BASTION_IP}'
+EOF
+fi
+
+cat >> ${OCS_CI_CONF} << EOF
 
 UPGRADE:
   ocp_arch: ppc64le
