@@ -58,6 +58,7 @@ export OCS_VERSION="${UPGRADE_OCS_CHANNEL}"  # Use upgrade channel as OCS_VERSIO
 export VAULT_SUPPORT="${VAULT_SUPPORT:-false}"
 export FIPS_ENABLEMENT="${FIPS_ENABLEMENT:-false}"
 export OCS_REGISTRY_IMAGE="${UPGRADE_OCS_IMAGE}"
+export BASTION_IP="${BASTION_IP}"
 
 cd ${BASE_DIR}
 git clone https://github.com/shilpi-das1/ocs-upi-kvm
