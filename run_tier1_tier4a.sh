@@ -114,6 +114,7 @@ DEPLOYMENT:
 REPORTING:
   ocp_must_gather_image: ${MUST_GATHER_IMAGE}
 EOF
+cat ${OCS_CI_CONF}
 
 cd scripts
 bash setup-ocs-ci.sh 2>&1 | tee -a setup-ocs-ci.log
