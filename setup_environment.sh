@@ -68,7 +68,7 @@ echo "Cloning ocs-upi-kvm repository..."
 git clone https://github.com/ocp-power-automation/ocs-upi-kvm
 
 cd ocs-upi-kvm/
-git checkout master
+git checkout main
 # Extract major.minor version (e.g., 4.14, 4.18, 4.19, 4.20, 4.21)
 VERSION_NUM=$(echo "$ODF_VERSION" | grep -oE '[0-9]+\.[0-9]+')
 
