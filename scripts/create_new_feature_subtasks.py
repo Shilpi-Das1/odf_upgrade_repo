@@ -10,7 +10,7 @@ All configurable fields have built-in defaults but can be overridden via a
 single optional JSON config file passed with --config:
 
   {
-    "parent_key":      "CSOP-891",
+    "parent_key":      "<key>",
     "fix_version":     "ODF v4.23.0",
     "affects_version": "ODF v4.23.0",
     "component":       "ODF QE",
@@ -47,7 +47,7 @@ from jira_utils import JiraHelper  # noqa: E402  (import after path fix)
 # ---------------------------------------------------------------------------
 
 DEFAULTS = {
-    "parent_key":      "task_id",
+    "parent_key":      "<key>",
     "fix_version":     "ODF v4.23.0",
     "affects_version": "ODF v4.23.0",
     "component":       "ODF",
