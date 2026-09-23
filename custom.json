@@ -1,0 +1,7 @@
+{
+  "parent_key":      "CSOP-891",
+  "fix_version":     "ODF v4.23.0",
+  "affects_version": "ODF v4.23.0",
+  "component":       "ODF QE",
+  "label":           "odf-new-feature"
+}

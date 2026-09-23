@@ -22,3 +22,75 @@ index 621bd985d..e6da2228e 100644
          self.sanity_helpers.health_check()
          retry(ServiceUnavailable, tries=20, delay=30)(
              self.sanity_helpers.create_resources
+diff --git a/ocs_ci/utility/service.py b/ocs_ci/utility/service.py
+index 9d868d86c..048ec9001 100644
+--- a/ocs_ci/utility/service.py
++++ b/ocs_ci/utility/service.py
+@@ -36,8 +36,13 @@ class Service(object):
+         self.nodes = node.get_node_ip_addresses("InternalIP")
+ 
+         self.bastion_ip = "127.0.0.1"
++        self.ssh_key = ""
+         if "bastion_ip" in config.ENV_DATA:
+             self.bastion_ip = config.ENV_DATA["bastion_ip"]
++            import os
++            self.ssh_key = os.path.expanduser(
++                config.DEPLOYMENT.get("ssh_key_private", "~/.ssh/openshift-dev.pem")
++            )        
+ 
+     def verify_service(self, node, action):
+         """
+@@ -53,7 +58,7 @@ class Service(object):
+         """
+         nodeip = self.nodes[node.name]
+         result = exec_cmd(
+-            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@{self.bastion_ip} "
++            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {f'-i {self.ssh_key} ' if self.ssh_key else ''}root@{self.bastion_ip} "
+             f"ssh -o StrictHostKeyChecking=no core@{nodeip} "
+             f"sudo systemctl is-active {self.service_name}.service",
+             ignore_error=True,
+@@ -86,7 +91,7 @@ class Service(object):
+         """
+         nodeip = self.nodes[node.name]
+         cmd = (
+-            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@{self.bastion_ip} "
++            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {f'-i {self.ssh_key} ' if self.ssh_key else ''}root@{self.bastion_ip} "
+             f"ssh -o StrictHostKeyChecking=no core@{nodeip} "
+             f"sudo systemctl stop {self.service_name}.service"
+         )
+@@ -121,7 +126,7 @@ class Service(object):
+         """
+         nodeip = self.nodes[node.name]
+         cmd = (
+-            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@{self.bastion_ip} "
++            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {f'-i {self.ssh_key} ' if self.ssh_key else ''}root@{self.bastion_ip} "
+             f"ssh -o StrictHostKeyChecking=no core@{nodeip} "
+             f"sudo systemctl start {self.service_name}.service"
+         )
+@@ -150,7 +155,7 @@ class Service(object):
+         """
+         nodeip = self.nodes[node.name]
+         cmd = (
+-            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@{self.bastion_ip} "
++            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {f'-i {self.ssh_key} ' if self.ssh_key else ''}root@{self.bastion_ip} "
+             f"ssh -o StrictHostKeyChecking=no core@{nodeip} "
+             f"sudo systemctl kill {self.service_name}.service"
+         )
+@@ -175,7 +180,7 @@ class Service(object):
+         """
+         nodeip = self.nodes[node.name]
+         cmd = (
+-            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@{self.bastion_ip} "
++            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {f'-i {self.ssh_key} ' if self.ssh_key else ''}root@{self.bastion_ip} "
+             f"ssh -o StrictHostKeyChecking=no core@{nodeip} "
+             f"sudo systemctl restart {self.service_name}.service"
+         )
+@@ -204,7 +209,7 @@ class Service(object):
+         """
+         nodeip = self.nodes[node.name]
+         cmd = (
+-            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@{self.bastion_ip} "
++            f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {f'-i {self.ssh_key} ' if self.ssh_key else ''}root@{self.bastion_ip} "
+             f"ssh -o StrictHostKeyChecking=no core@{nodeip} "
+             f"sudo systemctl status {self.service_name}.service"
+         )
