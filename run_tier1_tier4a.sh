@@ -59,6 +59,7 @@ export VAULT_SUPPORT="${VAULT_SUPPORT:-false}"
 export FIPS_ENABLEMENT="${FIPS_ENABLEMENT:-false}"
 export OCS_REGISTRY_IMAGE="${UPGRADE_OCS_IMAGE}"
 export BASTION_IP="${BASTION_IP}"
+export BASTION_SSH_KEY="${BASTION_SSH_KEY}"
 
 cd ${BASE_DIR}
 git clone https://github.com/shilpi-das1/ocs-upi-kvm
@@ -83,21 +84,13 @@ if [ "$UPGRADE_OCS_CHANNEL" == "4.14" ]; then
     ${REPO_DIR}/patches/bucket-policy-normalize-414.patch
 fi
 
-# Create ocs-ci-conf.yaml using upgrade OCS values
+# Create ocs-ci-conf.yaml
 cat > ${OCS_CI_CONF} << EOF
 ENV_DATA:
   local_storage_allow_rotational_disks: true
   ocs_version: '${UPGRADE_OCS_CHANNEL}'
   number_of_storage_disks: 8
-EOF
-
-if [ -n "${BASTION_IP}" ]; then
-cat >> ${OCS_CI_CONF} << EOF
-  bastion_ip: '${BASTION_IP}'
-EOF
-fi
-
-cat >> ${OCS_CI_CONF} << EOF
+$([ -n "${BASTION_IP}" ] && echo "  bastion_ip: '${BASTION_IP}'")
 
 UPGRADE:
   ocp_arch: ppc64le
@@ -110,10 +103,12 @@ DEPLOYMENT:
   skip_download_client: true
   optional_operators_image: quay.io/openshift-release-dev/ocp-release-nightly:iib-int-index-art-operators-${OCP_VERSION}
   ocs_csv_channel: stable-${UPGRADE_OCS_CHANNEL}
+$([ -n "${BASTION_SSH_KEY}" ] && echo "  ssh_key_private: '${BASTION_SSH_KEY}'")
 
 REPORTING:
   ocp_must_gather_image: ${MUST_GATHER_IMAGE}
 EOF
+
 cat ${OCS_CI_CONF}
 
 cd scripts
