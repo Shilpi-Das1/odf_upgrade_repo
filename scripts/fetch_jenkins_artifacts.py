@@ -100,6 +100,11 @@ class JenkinsArtifactFetcher:
                 relative_path = artifact['relativePath']
                 local_path = self.artifacts_dir / file_name
 
+                # Skip must-gather download
+                if file_name.startswith('must-gather'):
+                    print(f"  ⏭ Skipping must-gather download: {file_name}")
+                    continue
+
                 if skip_if_exists and local_path.exists():
                     print(f"  ✓ {file_name} already exists, skipping download")
                     downloaded_files.append(local_path)

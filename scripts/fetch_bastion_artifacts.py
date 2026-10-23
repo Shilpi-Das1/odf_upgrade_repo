@@ -83,7 +83,7 @@ class BastionArtifactFetcher:
         # Define artifact patterns to fetch
         artifact_patterns = [
             'test-summary*.txt',
-            'must-gather*.tar.gz',
+            # 'must-gather*.tar.gz',
             'odf_tier_logs*.tar.gz'
         ]
         
