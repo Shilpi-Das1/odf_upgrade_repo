@@ -21,7 +21,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from dotenv import load_dotenv
 import urllib3
-from jira_utils import JiraHelper, GDriveHelper
+from jira_utils import JiraHelper  # , GDriveHelper
 
 # Disable SSL warnings for self-signed certificates
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -52,15 +52,15 @@ class JenkinsArtifactFetcher:
         self.jira_server = self.jira_helper.jira_server
 
         # Initialize Google Drive helper (optional — skipped if not configured)
-        self.gdrive_helper = None
-        if os.getenv('GOOGLE_DRIVE_PARENT_FOLDER_ID'):
-            try:
-                self.gdrive_helper = GDriveHelper()
-            except Exception as e:
-                print(f"⚠ Warning: Could not connect to Google Drive: {e}")
-                print(f"  Must-gather will not be uploaded to Google Drive")
-        else:
-            print("⚠ GOOGLE_DRIVE_PARENT_FOLDER_ID not set — Google Drive upload skipped")
+        # self.gdrive_helper = None
+        # if os.getenv('GOOGLE_DRIVE_PARENT_FOLDER_ID'):
+        #     try:
+        #         self.gdrive_helper = GDriveHelper()
+        #     except Exception as e:
+        #         print(f"⚠ Warning: Could not connect to Google Drive: {e}")
+        #         print(f"  Must-gather will not be uploaded to Google Drive")
+        # else:
+        #     print("⚠ GOOGLE_DRIVE_PARENT_FOLDER_ID not set — Google Drive upload skipped")
 
         # Create artifacts directory
         self.artifacts_dir = Path("jenkins_artifacts")
@@ -205,14 +205,14 @@ class JenkinsArtifactFetcher:
                 print(f"⚠ Warning: odf_tier_logs-*.tar.gz not found in artifacts")
 
             # Step 9: Upload must-gather to Google Drive (optional)
-            if self.gdrive_helper:
-                self.gdrive_helper.upload_must_gather(
-                    parsed_data['odf_build_full'], self.artifacts_dir
-                )
-            else:
-                print(f"\n{'='*60}")
-                print(f"⚠ Google Drive upload skipped (not configured)")
-                print(f"{'='*60}")
+            # if self.gdrive_helper:
+            #     self.gdrive_helper.upload_must_gather(
+            #         parsed_data['odf_build_full'], self.artifacts_dir
+            #     )
+            # else:
+            #     print(f"\n{'='*60}")
+            #     print(f"⚠ Google Drive upload skipped (not configured)")
+            #     print(f"{'='*60}")
 
             # Mark all steps as successful
             all_steps_successful = True
