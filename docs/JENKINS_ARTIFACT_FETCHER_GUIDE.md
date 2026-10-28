@@ -141,6 +141,8 @@ python scripts/fetch_jenkins_artifacts.py --build-number <BUILD_NUMBER> --due-da
     - `5/Jan/27` (January 5, 2027)
     - `25/Dec/26` (December 25, 2026)
   - **Month abbreviations:** Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
+- `--local-artifacts DIR` (optional): Path to a local directory containing `test-summary*.txt` and `odf_tier_logs-*.tar.gz`. **Skips Jenkins fetch entirely** — no `JENKINS_URL`, `JENKINS_USER`, or `JENKINS_API_TOKEN` needed.
+- `--resume` or `-r` (optional): Resume from a previous partial run, skipping steps already completed
 
 ### Examples
 
@@ -155,6 +157,9 @@ python scripts/fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26"
 # More examples with different dates
 python scripts/fetch_jenkins_artifacts.py -b 789 -d "5/Jan/27"
 python scripts/fetch_jenkins_artifacts.py -b 100 -d "25/Mar/26"
+
+# Use local artifacts (no Jenkins credentials needed)
+python scripts/fetch_jenkins_artifacts.py -b 123 -d "17/Jun/26" --local-artifacts /path/to/odf_tier_logs
 ```
 
 **Windows (PowerShell):**
@@ -164,6 +169,9 @@ python scripts/fetch_jenkins_artifacts.py --build-number 123 --due-date "17/Jun/
 
 # Short format
 python scripts/fetch_jenkins_artifacts.py -b 456 -d "20/Dec/26"
+
+# Use local artifacts
+python scripts/fetch_jenkins_artifacts.py -b 123 -d "17/Jun/26" --local-artifacts C:\path\to\odf_tier_logs
 ```
 
 **Windows (Command Prompt):**
@@ -448,19 +456,80 @@ project-root/
 This script can be integrated into CI/CD pipelines:
 
 ### Jenkins Pipeline Example
+
+The recommended approach uses **local workspace artifacts** (no Jenkins credentials needed) with an automatic fallback to fetching from Jenkins API if local files are not present.
+
 ```groovy
-stage('Create JIRA Subtask') {
+stage('Upload Results to JIRA') {
     steps {
         script {
-            sh """
-                python scripts/fetch_jenkins_artifacts.py \
-                    --build-number ${BUILD_NUMBER} \
-                    --due-date "17/Jun/26"
-            """
+            try {
+                withCredentials([
+                    string(credentialsId: 'JIRA_SERVER_ODF',    variable: 'JIRA_SERVER'),
+                    string(credentialsId: 'JIRA_EMAIL_ODF',     variable: 'JIRA_EMAIL'),
+                    string(credentialsId: 'JIRA_API_TOKEN_ODF', variable: 'JIRA_API_TOKEN')
+                ]) {
+                    sh '''#!/bin/bash
+                        # Install required Python packages (no sudo needed)
+                        pip3 install --user --quiet requests python-dotenv jira
+
+                        cd ${WORKSPACE}/${ODF_UPGRADE_REPO_DIR}
+
+                        DUE_DATE_ARG=""
+                        if [ -n "${JIRA_DUE_DATE}" ]; then
+                            DUE_DATE_ARG="--due-date ${JIRA_DUE_DATE}"
+                        fi
+
+                        # Prefer local workspace artifacts — no Jenkins API call needed.
+                        # Falls back to fetching from Jenkins API if local files are missing.
+                        LOCAL_SUMMARY=$(ls ${WORKSPACE}/odf_tier_logs/test-summary*.txt 2>/dev/null | head -1)
+
+                        if [ -n "${LOCAL_SUMMARY}" ]; then
+                            echo "Using local workspace artifacts from ${WORKSPACE}/odf_tier_logs"
+                            python3 scripts/fetch_jenkins_artifacts.py \
+                                --build-number ${BUILD_NUMBER} \
+                                --local-artifacts ${WORKSPACE}/odf_tier_logs \
+                                ${DUE_DATE_ARG}
+                        else
+                            echo "Local artifacts not found — falling back to Jenkins API fetch"
+                            export JENKINS_URL=$(echo "${BUILD_URL}" | sed 's|/[0-9]*/\?$||')
+                            python3 scripts/fetch_jenkins_artifacts.py \
+                                --build-number ${BUILD_NUMBER} \
+                                ${DUE_DATE_ARG}
+                        fi
+                    '''
+                }
+            }
+            catch (err) {
+                echo "Skipping JIRA upload: ${err.getMessage()}"
+                // Non-fatal: pipeline continues to archiving and cluster cleanup
+            }
         }
     }
 }
 ```
+
+**Credentials required in Jenkins credential store** (all as *Secret text* kind):
+
+| Credential ID | Value |
+|---|---|
+| `JIRA_SERVER_ODF` | JIRA server URL, e.g. `https://issues.redhat.com` |
+| `JIRA_EMAIL_ODF` | JIRA account email |
+| `JIRA_API_TOKEN_ODF` | JIRA API token |
+| `JENKINS_USER` | Jenkins username *(only needed for fallback path)* |
+| `JENKINS_API_TOKEN` | Jenkins API token *(only needed for fallback path)* |
+
+**Add to pipeline `environment {}` block:**
+```groovy
+JIRA_DUE_DATE = "${params.jiraDueDate}"
+```
+
+**Add to pipeline `parameters` block:**
+```groovy
+string(defaultValue: '', description: 'Due date for JIRA subtask (format: d/MMM/yy, e.g., 17/Jun/26). Leave empty to skip.', name: 'jiraDueDate')
+```
+
+> **Note:** The stage is non-fatal — if JIRA credentials are missing from the Jenkins credential store or the upload fails for any reason, a warning is printed and the pipeline continues normally to artifact archiving and cluster cleanup.
 
 ### GitHub Actions Example
 ```yaml
@@ -493,4 +562,5 @@ For issues or questions:
 
 ## Version History
 
+- **v1.1** - Added `--local-artifacts` flag: skip Jenkins fetch when files are already present on disk (e.g. during a Jenkins pipeline run). Jenkins credentials are no longer required when this flag is used.
 - **v1.0** - Initial release with Jenkins artifact fetching and JIRA integration

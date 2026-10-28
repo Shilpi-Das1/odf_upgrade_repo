@@ -39,13 +39,13 @@ class JenkinsArtifactFetcher:
         self.jenkins_user = os.getenv('JENKINS_USER')
         self.jenkins_api_token = os.getenv('JENKINS_API_TOKEN')
 
-        if not all([self.jenkins_url, self.jenkins_user, self.jenkins_api_token]):
-            raise ValueError(
-                "Missing Jenkins credentials. Please set JENKINS_URL, JENKINS_USER, "
-                "and JENKINS_API_TOKEN in .env file"
-            )
-
-        self.jenkins_auth = HTTPBasicAuth(self.jenkins_user, self.jenkins_api_token)
+        # Jenkins auth is set only when all credentials are present.
+        # fetch_artifacts() validates them if actually called.
+        # In --local-artifacts mode these are not needed at all.
+        if all([self.jenkins_url, self.jenkins_user, self.jenkins_api_token]):
+            self.jenkins_auth = HTTPBasicAuth(self.jenkins_user, self.jenkins_api_token)
+        else:
+            self.jenkins_auth = None
 
         # Initialize JIRA helper
         self.jira_helper = JiraHelper()
@@ -68,6 +68,13 @@ class JenkinsArtifactFetcher:
 
     def fetch_artifacts(self, build_number, skip_if_exists=False):
         """Fetch all artifacts from Jenkins build"""
+        # Validate Jenkins credentials only when this method is actually called
+        if not self.jenkins_auth:
+            raise ValueError(
+                "Missing Jenkins credentials. Please set JENKINS_URL, JENKINS_USER, "
+                "and JENKINS_API_TOKEN"
+            )
+
         print(f"\n{'='*60}")
         print(f"Fetching artifacts from Jenkins build #{build_number}")
         print(f"{'='*60}")
@@ -152,6 +159,92 @@ class JenkinsArtifactFetcher:
             print(f"✓ Deleted {self.artifacts_dir}")
         else:
             print(f"⚠ Artifacts directory not found")
+
+    def process_local(self, artifacts_dir, build_number, due_date, resume=False):
+        """Process artifacts already on disk — skips Jenkins fetch entirely.
+
+        Args:
+            artifacts_dir: Path to directory containing test-summary*.txt
+                           and optionally odf_tier_logs-*.tar.gz
+            build_number:  Jenkins build number (used only for display/logging)
+            due_date:      JIRA due date string or None
+            resume:        If True, skip steps already completed (comments/attachments)
+        """
+        subtask_key = None
+        all_steps_successful = False
+        artifacts_path = Path(artifacts_dir)
+
+        print(f"\n{'='*60}")
+        print(f"Using local artifacts from: {artifacts_path}")
+        print(f"{'='*60}")
+
+        if not artifacts_path.exists():
+            raise FileNotFoundError(f"Local artifacts directory not found: {artifacts_path}")
+
+        try:
+            # Find test-summary*.txt and odf_tier_logs tar.gz in the given directory
+            test_summary_path = None
+            tier_logs_tar_path = None
+
+            for file_path in sorted(artifacts_path.iterdir()):
+                if file_path.name.startswith('test-summary') and file_path.name.endswith('.txt'):
+                    test_summary_path = file_path
+                elif (file_path.name.startswith('odf_tier_logs-')
+                      and file_path.name.endswith('.tar.gz')):
+                    tier_logs_tar_path = file_path
+
+            if not test_summary_path:
+                raise FileNotFoundError(
+                    f"test-summary*.txt not found in {artifacts_path}"
+                )
+
+            print(f"✓ Found test-summary: {test_summary_path.name}")
+            if tier_logs_tar_path:
+                print(f"✓ Found tier logs:    {tier_logs_tar_path.name}")
+
+            # Reuse the same JIRA steps as process()
+            parsed_data = self.jira_helper.parse_test_summary(test_summary_path)
+
+            self.jira_helper.update_subtask_config(
+                parsed_data['odf_version'],
+                parsed_data['odf_summary'],
+                due_date
+            )
+
+            subtask_key = self.jira_helper.create_jira_subtask()
+
+            self.jira_helper.add_comments_to_jira(
+                subtask_key, parsed_data['sections'], skip_if_exists=resume
+            )
+
+            self.jira_helper.upload_attachment_to_jira(
+                subtask_key, test_summary_path, skip_if_exists=resume
+            )
+
+            if tier_logs_tar_path:
+                self.jira_helper.upload_attachment_to_jira(
+                    subtask_key, tier_logs_tar_path, skip_if_exists=resume
+                )
+            else:
+                print(f"⚠ Warning: odf_tier_logs-*.tar.gz not found in {artifacts_path}")
+
+            all_steps_successful = True
+
+            print(f"\n{'='*60}")
+            print(f"✓ Process completed successfully!")
+            print(f"{'='*60}")
+            print(f"JIRA Subtask: {subtask_key}")
+            jira_url = self.jira_server.rstrip('/') if self.jira_server else ''
+            print(f"URL: {jira_url}/browse/{subtask_key}")
+            print(f"{'='*60}")
+
+            return subtask_key
+
+        except Exception as e:
+            print(f"\n✗ Error: {str(e)}", file=sys.stderr)
+            if not all_steps_successful:
+                print(f"\n⚠ Fix the issue and re-run with --resume flag to skip completed steps")
+            raise
 
     def process(self, build_number, due_date, resume=False):
         """Main processing workflow with optional resume capability"""
@@ -289,13 +382,27 @@ Optional (Google Drive upload):
         help='Resume from previous run, skip already completed steps'
     )
 
+    parser.add_argument(
+        '--local-artifacts',
+        metavar='DIR',
+        default=None,
+        help='Path to a local directory containing test-summary*.txt and '
+             'odf_tier_logs-*.tar.gz. Skips Jenkins fetch entirely — '
+             'no JENKINS_URL/USER/API_TOKEN needed.'
+    )
+
     args = parser.parse_args()
 
     due_date = args.due_date if args.due_date and args.due_date.strip() else None
 
     try:
         fetcher = JenkinsArtifactFetcher()
-        fetcher.process(args.build_number, due_date, resume=args.resume)
+        if args.local_artifacts:
+            fetcher.process_local(
+                args.local_artifacts, args.build_number, due_date, resume=args.resume
+            )
+        else:
+            fetcher.process(args.build_number, due_date, resume=args.resume)
         return 0
 
     except Exception as e:
