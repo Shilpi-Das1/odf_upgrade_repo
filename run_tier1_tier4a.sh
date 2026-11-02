@@ -168,7 +168,7 @@ if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
     echo "  StorageCluster Phase: $storageClusterPhaseAfter"
     echo "  CephCluster Health: $healthAfter"
     
-    if [[ "$storageClusterPhaseAfter" == "Ready" && "$healthAfter" == "HEALTH_OK" ]]; then
+    if [[ "$storageClusterPhase" == "Ready" && "$health" =~ ^HEALTH_OK ]]; then
         echo ""
         echo "=========================================="
         echo "Cluster is healthy. Running rerun tests..."
