@@ -141,7 +141,7 @@ health=$(oc get cephcluster -n openshift-storage -o jsonpath='{.items[0].status.
 echo "  StorageCluster Phase: $storageClusterPhase"
 echo "  CephCluster Health: $health"
 
-if [[ "$storageClusterPhase" == "Ready" && "$health" == "HEALTH_OK" ]]; then
+if [[ "$storageClusterPhase" == "Ready" && "$health" =~ ^HEALTH_OK ]]; then
     echo "StorageCluster is Ready and Ceph cluster is healthy. Running tier4a..."
     LOG_FILE_4a="${LOG_DIR}/tier4a_${OCS_VERSION}.log"
     LOG_FILE_4a_ERR="${LOG_DIR}/tier4a_${OCS_VERSION}.err"
